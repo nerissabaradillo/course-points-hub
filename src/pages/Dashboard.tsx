@@ -467,6 +467,35 @@ function StatCard({
   );
 }
 
+function CourseAvatar({
+  name,
+  image,
+  color,
+  size = "md",
+}: {
+  name: string;
+  image: string | null;
+  color: string | null;
+  size?: "sm" | "md" | "lg";
+}) {
+  const dim = size === "sm" ? "h-7 w-7 text-[10px]" : size === "lg" ? "h-12 w-12 text-sm" : "h-9 w-9 text-xs";
+  return (
+    <div
+      className={`${dim} shrink-0 rounded-full overflow-hidden border border-border grid place-items-center font-bold`}
+      style={{
+        background: color ?? "hsl(var(--secondary))",
+        color: color ? "#fff" : "hsl(var(--foreground))",
+      }}
+    >
+      {image ? (
+        <img src={image} alt={name} className="h-full w-full object-cover" />
+      ) : (
+        name.slice(0, 2).toUpperCase()
+      )}
+    </div>
+  );
+}
+
 function EmptyState({ message }: { message: string }) {
   return (
     <div className="grid place-items-center h-[200px] text-center text-muted-foreground">
