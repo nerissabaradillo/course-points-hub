@@ -166,27 +166,23 @@ export default function Dashboard() {
         <div className="absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-primary-glow/40 blur-3xl" />
         <div className="relative">
           {/* University banner */}
-          <div className="flex items-center justify-center gap-3 sm:gap-5 rounded-xl bg-primary-foreground/10 px-4 py-3 backdrop-blur-md ring-1 ring-primary-foreground/20">
+          <div className="flex items-center justify-start gap-4 sm:gap-5 rounded-xl bg-primary-foreground/10 px-4 py-3 backdrop-blur-md ring-1 ring-primary-foreground/20">
             <img
               src={nemsuLogo}
               alt="North Eastern Mindanao State University"
-              className="h-12 w-12 sm:h-16 sm:w-16 object-contain shrink-0 drop-shadow"
+              className="h-14 w-14 sm:h-20 sm:w-20 object-contain shrink-0 drop-shadow"
             />
-            <div className="flex flex-col text-center">
-              <h2 className="text-sm sm:text-lg font-bold leading-tight tracking-wide">
+            <div className="flex flex-col text-left">
+              <h2 className="text-lg sm:text-3xl font-bold leading-tight tracking-tight">
                 North Eastern Mindanao State University
               </h2>
-              <p className="text-xs sm:text-sm text-primary-foreground/85 font-medium">
+              <p className="text-sm sm:text-lg text-primary-foreground/85 font-medium">
                 Department of Computer Studies
               </p>
             </div>
           </div>
 
-          <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-1 text-xs font-semibold backdrop-blur">
-            <TrendingUp className="h-3.5 w-3.5" />
-            Live Leaderboard
-          </div>
-          <h1 className="mt-4 text-3xl sm:text-5xl font-bold tracking-tight">Pakusganay 2026</h1>
+          <h1 className="mt-6 text-2xl sm:text-3xl font-bold tracking-tight">Pakusganay 2026</h1>
           <p className="mt-2 max-w-xl text-primary-foreground/85">
             Track every point. Crown the champion course.
           </p>
