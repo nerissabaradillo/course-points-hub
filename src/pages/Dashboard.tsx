@@ -179,11 +179,25 @@ export default function Dashboard() {
               return (
                 <div
                   key={r.course_id}
-                  className={`rounded-2xl ring-2 ${s.ring} bg-card p-6 shadow-card transition-smooth hover:shadow-elegant hover:-translate-y-1`}
+                  className={`relative overflow-hidden rounded-2xl ring-2 ${s.ring} bg-card p-6 shadow-card transition-smooth hover:shadow-elegant hover:-translate-y-1`}
                 >
-                  <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${s.bg} ${s.text}`}>
-                    <Icon className="h-3.5 w-3.5" />
-                    {s.label}
+                  {r.course_color && (
+                    <div
+                      className="absolute inset-x-0 top-0 h-1.5"
+                      style={{ background: r.course_color }}
+                    />
+                  )}
+                  <div className="flex items-center gap-3">
+                    <CourseAvatar
+                      name={r.course_name}
+                      image={r.course_image}
+                      color={r.course_color}
+                      size="lg"
+                    />
+                    <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${s.bg} ${s.text}`}>
+                      <Icon className="h-3.5 w-3.5" />
+                      {s.label}
+                    </div>
                   </div>
                   <div className="mt-4 text-2xl font-bold">{r.course_name}</div>
                   <div className="mt-1 text-3xl font-extrabold text-primary">
