@@ -165,7 +165,29 @@ export default function Dashboard() {
         <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-accent/30 blur-3xl" />
         <div className="absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-primary-glow/40 blur-3xl" />
         <div className="relative">
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-1 text-xs font-semibold backdrop-blur">
+          {/* University banner */}
+          <div className="flex items-center justify-center gap-3 sm:gap-5 rounded-xl bg-primary-foreground/10 px-4 py-3 backdrop-blur-md ring-1 ring-primary-foreground/20">
+            <img
+              src={nemsuLogo}
+              alt="North Eastern Mindanao State University"
+              className="h-12 w-12 sm:h-16 sm:w-16 object-contain shrink-0 drop-shadow"
+            />
+            <div className="flex flex-col text-center">
+              <h2 className="text-sm sm:text-lg font-bold leading-tight tracking-wide">
+                North Eastern Mindanao State University
+              </h2>
+              <p className="text-xs sm:text-sm text-primary-foreground/85 font-medium">
+                Department of Computer Studies
+              </p>
+            </div>
+            <img
+              src={citeLogo}
+              alt="College of Information Technology Education"
+              className="h-12 w-12 sm:h-16 sm:w-16 object-contain shrink-0 drop-shadow"
+            />
+          </div>
+
+          <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-1 text-xs font-semibold backdrop-blur">
             <TrendingUp className="h-3.5 w-3.5" />
             Live Leaderboard
           </div>
