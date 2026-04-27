@@ -186,7 +186,7 @@ export default function AdminScores() {
       <div>
         <h1 className="text-3xl font-bold">Manage Scores</h1>
         <p className="text-muted-foreground mt-1">
-          Pick an event, then add scores per course. Multiple entries are allowed.
+          Pick an event, then add scores per course.
         </p>
       </div>
 
