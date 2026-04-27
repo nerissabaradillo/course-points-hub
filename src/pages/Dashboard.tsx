@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import nemsuLogo from "@/assets/nemsu-logo.png";
+import citeLogo from "@/assets/cite-logo.png";
 
 interface RankingRow {
   course_id: string;
