@@ -297,10 +297,11 @@ export default function Dashboard() {
                   <li
                     key={r.course_id}
                     className="flex items-center justify-between rounded-lg border border-border bg-background/50 px-4 py-3 transition-smooth hover:bg-secondary"
+                    style={r.course_color ? { borderLeft: `4px solid ${r.course_color}` } : undefined}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <span
-                        className={`grid h-8 w-8 place-items-center rounded-full text-sm font-bold ${
+                        className={`grid h-8 w-8 place-items-center rounded-full text-sm font-bold shrink-0 ${
                           i === 0
                             ? "bg-gradient-gold text-accent-foreground"
                             : i === 1
@@ -312,9 +313,14 @@ export default function Dashboard() {
                       >
                         {i + 1}
                       </span>
-                      <span className="font-medium">{r.course_name}</span>
+                      <CourseAvatar
+                        name={r.course_name}
+                        image={r.course_image}
+                        color={r.course_color}
+                      />
+                      <span className="font-medium truncate">{r.course_name}</span>
                     </div>
-                    <span className="font-bold text-primary">{r.total_points} pts</span>
+                    <span className="font-bold text-primary shrink-0">{r.total_points} pts</span>
                   </li>
                 ))}
               </ol>
