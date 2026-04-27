@@ -32,25 +32,27 @@ const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
 
   const courseMap = new Map((courses ?? []).map((c) => [c.id, c.name]));
 
-  return (events ?? []).map((ev) => {
-    const evScores = (scores ?? []).filter((s) => s.event_id === ev.id);
-    const totals = new Map<string, number>();
-    let lastUpdated: string | null = null;
-    evScores.forEach((s) => {
-      totals.set(s.course_id, (totals.get(s.course_id) ?? 0) + (s.points ?? 0));
-      if (!lastUpdated || (s.updated_at && s.updated_at > lastUpdated)) {
-        lastUpdated = s.updated_at;
-      }
-    });
-    const rows = Array.from(totals.entries())
-      .map(([course_id, points]) => ({
-        course_id,
-        course_name: courseMap.get(course_id) ?? "Unknown",
-        points,
-      }))
-      .sort((a, b) => b.points - a.points);
-    return { event_id: ev.id, event_name: ev.name, last_updated: lastUpdated, rows };
-  });
+  return (events ?? [])
+    .map((ev) => {
+      const evScores = (scores ?? []).filter((s) => s.event_id === ev.id);
+      const totals = new Map<string, number>();
+      let lastUpdated: string | null = null;
+      evScores.forEach((s) => {
+        totals.set(s.course_id, (totals.get(s.course_id) ?? 0) + (s.points ?? 0));
+        if (!lastUpdated || (s.updated_at && s.updated_at > lastUpdated)) {
+          lastUpdated = s.updated_at;
+        }
+      });
+      const rows = Array.from(totals.entries())
+        .map(([course_id, points]) => ({
+          course_id,
+          course_name: courseMap.get(course_id) ?? "Unknown",
+          points,
+        }))
+        .sort((a, b) => b.points - a.points);
+      return { event_id: ev.id, event_name: ev.name, last_updated: lastUpdated, rows };
+    })
+    .filter((ev) => ev.rows.length > 0);
 };
 
 const fetchRankings = async (): Promise<RankingRow[]> => {
@@ -257,7 +259,7 @@ export default function Dashboard() {
           <div>
             <h2 className="text-xl font-bold">Leaderboards by Event</h2>
             <p className="text-sm text-muted-foreground">
-              Rankings per sport event. Events updated within the last 24 hours are marked recent.
+              Only events with recorded scores are shown. Events updated within the last 24 hours are marked recent.
             </p>
           </div>
         </div>
@@ -271,7 +273,7 @@ export default function Dashboard() {
         ) : !eventBoards || eventBoards.length === 0 ? (
           <Card className="bg-gradient-card">
             <CardContent className="p-6">
-              <EmptyState message="No events yet. Add events from the admin panel." />
+              <EmptyState message="No scores recorded yet. Add scores from the admin panel to see event leaderboards." />
             </CardContent>
           </Card>
         ) : (
@@ -299,36 +301,32 @@ export default function Dashboard() {
                     )}
                   </CardHeader>
                   <CardContent>
-                    {ev.rows.length === 0 ? (
-                      <p className="text-sm text-muted-foreground py-4 text-center">No scores recorded yet.</p>
-                    ) : (
-                      <ol className="space-y-2">
-                        {ev.rows.map((r, i) => (
-                          <li
-                            key={r.course_id}
-                            className="flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2"
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span
-                                className={`grid h-6 w-6 place-items-center rounded-full text-xs font-bold shrink-0 ${
-                                  i === 0
-                                    ? "bg-gradient-gold text-accent-foreground"
-                                    : i === 1
-                                    ? "bg-silver text-foreground"
-                                    : i === 2
-                                    ? "bg-bronze text-primary-foreground"
-                                    : "bg-secondary text-foreground"
-                                }`}
-                              >
-                                {i + 1}
-                              </span>
-                              <span className="text-sm font-medium truncate">{r.course_name}</span>
-                            </div>
-                            <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
-                          </li>
-                        ))}
-                      </ol>
-                    )}
+                    <ol className="space-y-2">
+                      {ev.rows.map((r, i) => (
+                        <li
+                          key={r.course_id}
+                          className="flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span
+                              className={`grid h-6 w-6 place-items-center rounded-full text-xs font-bold shrink-0 ${
+                                i === 0
+                                  ? "bg-gradient-gold text-accent-foreground"
+                                  : i === 1
+                                  ? "bg-silver text-foreground"
+                                  : i === 2
+                                  ? "bg-bronze text-primary-foreground"
+                                  : "bg-secondary text-foreground"
+                              }`}
+                            >
+                              {i + 1}
+                            </span>
+                            <span className="text-sm font-medium truncate">{r.course_name}</span>
+                          </div>
+                          <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
+                        </li>
+                      ))}
+                    </ol>
                   </CardContent>
                 </Card>
               );
