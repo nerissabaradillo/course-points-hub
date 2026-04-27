@@ -273,7 +273,7 @@ export default function Dashboard() {
         ) : !eventBoards || eventBoards.length === 0 ? (
           <Card className="bg-gradient-card">
             <CardContent className="p-6">
-              <EmptyState message="No events yet. Add events from the admin panel." />
+              <EmptyState message="No scores recorded yet. Add scores from the admin panel to see event leaderboards." />
             </CardContent>
           </Card>
         ) : (
