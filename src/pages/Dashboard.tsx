@@ -1,16 +1,57 @@
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip as RTooltip, Cell } from "recharts";
-import { Trophy, Medal, Award, TrendingUp, Users } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Users, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 interface RankingRow {
   course_id: string;
   course_name: string;
   total_points: number;
 }
+
+interface EventLeaderboard {
+  event_id: string;
+  event_name: string;
+  last_updated: string | null;
+  rows: { course_id: string; course_name: string; points: number }[];
+}
+
+const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
+  const [{ data: events, error: eErr }, { data: courses, error: cErr }, { data: scores, error: sErr }] = await Promise.all([
+    supabase.from("events").select("id, name").order("name"),
+    supabase.from("courses").select("id, name"),
+    supabase.from("scores").select("event_id, course_id, points, updated_at"),
+  ]);
+  if (eErr) throw eErr;
+  if (cErr) throw cErr;
+  if (sErr) throw sErr;
+
+  const courseMap = new Map((courses ?? []).map((c) => [c.id, c.name]));
+
+  return (events ?? []).map((ev) => {
+    const evScores = (scores ?? []).filter((s) => s.event_id === ev.id);
+    const totals = new Map<string, number>();
+    let lastUpdated: string | null = null;
+    evScores.forEach((s) => {
+      totals.set(s.course_id, (totals.get(s.course_id) ?? 0) + (s.points ?? 0));
+      if (!lastUpdated || (s.updated_at && s.updated_at > lastUpdated)) {
+        lastUpdated = s.updated_at;
+      }
+    });
+    const rows = Array.from(totals.entries())
+      .map(([course_id, points]) => ({
+        course_id,
+        course_name: courseMap.get(course_id) ?? "Unknown",
+        points,
+      }))
+      .sort((a, b) => b.points - a.points);
+    return { event_id: ev.id, event_name: ev.name, last_updated: lastUpdated, rows };
+  });
+};
 
 const fetchRankings = async (): Promise<RankingRow[]> => {
   const [{ data: courses, error: cErr }, { data: scores, error: sErr }] = await Promise.all([
@@ -59,6 +100,11 @@ export default function Dashboard() {
   const { data: rankings, isLoading } = useQuery({
     queryKey: ["rankings"],
     queryFn: fetchRankings,
+  });
+
+  const { data: eventBoards, isLoading: eventsLoading } = useQuery({
+    queryKey: ["event-leaderboards"],
+    queryFn: fetchEventLeaderboards,
   });
 
   const totals = useMemo(() => {
@@ -203,6 +249,92 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+      </section>
+
+      {/* Per-event leaderboards */}
+      <section>
+        <div className="mb-4 flex items-end justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-xl font-bold">Leaderboards by Event</h2>
+            <p className="text-sm text-muted-foreground">
+              Rankings per sport event. Events updated within the last 24 hours are marked recent.
+            </p>
+          </div>
+        </div>
+
+        {eventsLoading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-64 w-full" />
+            ))}
+          </div>
+        ) : !eventBoards || eventBoards.length === 0 ? (
+          <Card className="bg-gradient-card">
+            <CardContent className="p-6">
+              <EmptyState message="No events yet. Add events from the admin panel." />
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {eventBoards.map((ev) => {
+              const isRecent =
+                ev.last_updated &&
+                Date.now() - new Date(ev.last_updated).getTime() <= 24 * 60 * 60 * 1000;
+              return (
+                <Card key={ev.event_id} className="bg-gradient-card transition-smooth hover:shadow-elegant">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-base">{ev.event_name}</CardTitle>
+                      {isRecent && (
+                        <Badge className="bg-gradient-gold text-accent-foreground hover:opacity-90 gap-1">
+                          <Clock className="h-3 w-3" />
+                          Recent
+                        </Badge>
+                      )}
+                    </div>
+                    {ev.last_updated && (
+                      <p className="text-xs text-muted-foreground">
+                        Updated {new Date(ev.last_updated).toLocaleString()}
+                      </p>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {ev.rows.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-4 text-center">No scores recorded yet.</p>
+                    ) : (
+                      <ol className="space-y-2">
+                        {ev.rows.map((r, i) => (
+                          <li
+                            key={r.course_id}
+                            className="flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span
+                                className={`grid h-6 w-6 place-items-center rounded-full text-xs font-bold shrink-0 ${
+                                  i === 0
+                                    ? "bg-gradient-gold text-accent-foreground"
+                                    : i === 1
+                                    ? "bg-silver text-foreground"
+                                    : i === 2
+                                    ? "bg-bronze text-primary-foreground"
+                                    : "bg-secondary text-foreground"
+                                }`}
+                              >
+                                {i + 1}
+                              </span>
+                              <span className="text-sm font-medium truncate">{r.course_name}</span>
+                            </div>
+                            <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </section>
     </div>
   );
