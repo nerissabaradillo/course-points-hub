@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import nemsuLogo from "@/assets/nemsu-logo.png";
-import citeLogo from "@/assets/cite-logo.png";
+
 
 interface RankingRow {
   course_id: string;
@@ -180,11 +180,6 @@ export default function Dashboard() {
                 Department of Computer Studies
               </p>
             </div>
-            <img
-              src={citeLogo}
-              alt="College of Information Technology Education"
-              className="h-12 w-12 sm:h-16 sm:w-16 object-contain shrink-0 drop-shadow"
-            />
           </div>
 
           <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-primary-foreground/10 px-3 py-1 text-xs font-semibold backdrop-blur">
