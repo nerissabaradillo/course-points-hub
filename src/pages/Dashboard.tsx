@@ -301,36 +301,32 @@ export default function Dashboard() {
                     )}
                   </CardHeader>
                   <CardContent>
-                    {ev.rows.length === 0 ? (
-                      <p className="text-sm text-muted-foreground py-4 text-center">No scores recorded yet.</p>
-                    ) : (
-                      <ol className="space-y-2">
-                        {ev.rows.map((r, i) => (
-                          <li
-                            key={r.course_id}
-                            className="flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2"
-                          >
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span
-                                className={`grid h-6 w-6 place-items-center rounded-full text-xs font-bold shrink-0 ${
-                                  i === 0
-                                    ? "bg-gradient-gold text-accent-foreground"
-                                    : i === 1
-                                    ? "bg-silver text-foreground"
-                                    : i === 2
-                                    ? "bg-bronze text-primary-foreground"
-                                    : "bg-secondary text-foreground"
-                                }`}
-                              >
-                                {i + 1}
-                              </span>
-                              <span className="text-sm font-medium truncate">{r.course_name}</span>
-                            </div>
-                            <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
-                          </li>
-                        ))}
-                      </ol>
-                    )}
+                    <ol className="space-y-2">
+                      {ev.rows.map((r, i) => (
+                        <li
+                          key={r.course_id}
+                          className="flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span
+                              className={`grid h-6 w-6 place-items-center rounded-full text-xs font-bold shrink-0 ${
+                                i === 0
+                                  ? "bg-gradient-gold text-accent-foreground"
+                                  : i === 1
+                                  ? "bg-silver text-foreground"
+                                  : i === 2
+                                  ? "bg-bronze text-primary-foreground"
+                                  : "bg-secondary text-foreground"
+                              }`}
+                            >
+                              {i + 1}
+                            </span>
+                            <span className="text-sm font-medium truncate">{r.course_name}</span>
+                          </div>
+                          <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
+                        </li>
+                      ))}
+                    </ol>
                   </CardContent>
                 </Card>
               );
