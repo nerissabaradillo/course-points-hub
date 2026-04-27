@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Trash2, Plus, Loader2 } from "lucide-react";
+import { Pencil, Trash2, Plus, Loader2, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -37,14 +37,13 @@ interface ScoreRow {
   points: number;
   course_id: string;
   event_id: string;
-  courses: { name: string } | null;
-  events: { name: string } | null;
+  courses: { name: string; color: string | null } | null;
 }
 
 export default function AdminScores() {
   const qc = useQueryClient();
+  const [eventId, setEventId] = useState<string>("");
   const [courseId, setCourseId] = useState("");
-  const [eventId, setEventId] = useState("");
   const [points, setPoints] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPoints, setEditPoints] = useState("");
@@ -53,7 +52,10 @@ export default function AdminScores() {
   const { data: courses } = useQuery({
     queryKey: ["courses"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("courses").select("id, name").order("name");
+      const { data, error } = await supabase
+        .from("courses")
+        .select("id, name, color")
+        .order("name");
       if (error) throw error;
       return data ?? [];
     },
@@ -68,13 +70,18 @@ export default function AdminScores() {
     },
   });
 
+  // Auto-select first event when loaded
+  if (!eventId && events && events.length > 0) {
+    setEventId(events[0].id);
+  }
+
   const { data: scores, isLoading } = useQuery({
     queryKey: ["scores-with-relations"],
     queryFn: async (): Promise<ScoreRow[]> => {
       const { data, error } = await supabase
         .from("scores")
-        .select("id, points, course_id, event_id, courses(name), events(name)")
-        .order("created_at", { ascending: false });
+        .select("id, points, course_id, event_id, courses(name, color)")
+        .order("points", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as ScoreRow[];
     },
@@ -99,6 +106,7 @@ export default function AdminScores() {
     onSuccess: () => {
       toast.success("Score added");
       setPoints("");
+      setCourseId("");
       invalidate();
     },
     onError: (e: Error) => toast.error(e.message),
@@ -131,154 +139,205 @@ export default function AdminScores() {
   });
 
   const noCoursesOrEvents = !courses?.length || !events?.length;
+  const selectedEvent = events?.find((e) => e.id === eventId);
+
+  // Filter scores to selected event only, sorted by points desc
+  const eventScores = useMemo(
+    () => (scores ?? []).filter((s) => s.event_id === eventId),
+    [scores, eventId],
+  );
 
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
         <h1 className="text-3xl font-bold">Manage Scores</h1>
         <p className="text-muted-foreground mt-1">
-          Record points each course earns per event. Multiple entries per course/event are allowed.
+          Pick an event, then add scores per course. Multiple entries are allowed.
         </p>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Record a new score</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {noCoursesOrEvents && (
-            <p className="text-sm text-muted-foreground mb-4">
+      {noCoursesOrEvents ? (
+        <Card>
+          <CardContent className="p-6">
+            <p className="text-sm text-muted-foreground">
               Add at least one course and one event first.
             </p>
-          )}
-          <form
-            className="grid gap-3 sm:grid-cols-[1fr_1fr_120px_auto]"
-            onSubmit={(e) => {
-              e.preventDefault();
-              createMut.mutate();
-            }}
-          >
-            <Select value={courseId} onValueChange={setCourseId} disabled={noCoursesOrEvents}>
-              <SelectTrigger>
-                <SelectValue placeholder="Course" />
-              </SelectTrigger>
-              <SelectContent>
-                {courses?.map((c) => (
-                  <SelectItem key={c.id} value={c.id}>
-                    {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          </CardContent>
+        </Card>
+      ) : (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Select event</CardTitle>
+              <CardDescription>All actions below apply to this event.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Select value={eventId} onValueChange={setEventId}>
+                <SelectTrigger className="max-w-sm">
+                  <SelectValue placeholder="Choose an event" />
+                </SelectTrigger>
+                <SelectContent>
+                  {events?.map((ev) => (
+                    <SelectItem key={ev.id} value={ev.id}>
+                      {ev.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </CardContent>
+          </Card>
 
-            <Select value={eventId} onValueChange={setEventId} disabled={noCoursesOrEvents}>
-              <SelectTrigger>
-                <SelectValue placeholder="Event" />
-              </SelectTrigger>
-              <SelectContent>
-                {events?.map((ev) => (
-                  <SelectItem key={ev.id} value={ev.id}>
-                    {ev.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                Add score to <span className="text-primary">{selectedEvent?.name}</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form
+                className="grid gap-3 sm:grid-cols-[1fr_140px_auto]"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  createMut.mutate();
+                }}
+              >
+                <Select value={courseId} onValueChange={setCourseId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select course" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {courses?.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-            <Input
-              type="number"
-              value={points}
-              onChange={(e) => setPoints(e.target.value)}
-              placeholder="Points"
-              disabled={noCoursesOrEvents}
-            />
+                <Input
+                  type="number"
+                  value={points}
+                  onChange={(e) => setPoints(e.target.value)}
+                  placeholder="Points"
+                />
 
-            <Button type="submit" disabled={createMut.isPending || noCoursesOrEvents}>
-              {createMut.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-              <span className="ml-2">Save</span>
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+                <Button type="submit" disabled={createMut.isPending}>
+                  {createMut.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Plus className="h-4 w-4" />
+                  )}
+                  <span className="ml-2">Save</span>
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">All entries ({scores?.length ?? 0})</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {isLoading ? (
-            <p className="p-6 text-sm text-muted-foreground">Loading…</p>
-          ) : !scores || scores.length === 0 ? (
-            <p className="p-6 text-sm text-muted-foreground text-center">No scores recorded yet.</p>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Course</TableHead>
-                  <TableHead>Event</TableHead>
-                  <TableHead className="text-right">Points</TableHead>
-                  <TableHead className="w-[140px] text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {scores.map((s) => (
-                  <TableRow key={s.id}>
-                    <TableCell className="font-medium">{s.courses?.name ?? "—"}</TableCell>
-                    <TableCell>{s.events?.name ?? "—"}</TableCell>
-                    <TableCell className="text-right">
-                      {editingId === s.id ? (
-                        <Input
-                          type="number"
-                          value={editPoints}
-                          onChange={(e) => setEditPoints(e.target.value)}
-                          className="w-24 ml-auto"
-                          autoFocus
-                        />
-                      ) : (
-                        <span className="font-bold text-primary">{s.points}</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {editingId === s.id ? (
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            size="sm"
-                            onClick={() => {
-                              const pts = parseInt(editPoints, 10);
-                              if (isNaN(pts)) return toast.error("Enter a number");
-                              updateMut.mutate({ id: s.id, pts });
-                            }}
-                          >
-                            Save
-                          </Button>
-                          <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>
-                            Cancel
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            onClick={() => {
-                              setEditingId(s.id);
-                              setEditPoints(String(s.points));
-                            }}
-                          >
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                          <Button size="icon" variant="ghost" onClick={() => setDeleteId(s.id)}>
-                            <Trash2 className="h-4 w-4 text-destructive" />
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Trophy className="h-4 w-4 text-primary" />
+                {selectedEvent?.name} — entries ({eventScores.length})
+              </CardTitle>
+              <CardDescription>Ranked by points (highest first).</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {isLoading ? (
+                <p className="p-6 text-sm text-muted-foreground">Loading…</p>
+              ) : eventScores.length === 0 ? (
+                <p className="p-6 text-sm text-muted-foreground text-center">
+                  No scores recorded for this event yet.
+                </p>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[60px]">#</TableHead>
+                      <TableHead>Course</TableHead>
+                      <TableHead className="text-right">Points</TableHead>
+                      <TableHead className="w-[140px] text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {eventScores.map((s, idx) => (
+                      <TableRow key={s.id}>
+                        <TableCell className="text-muted-foreground tabular-nums">
+                          {idx + 1}
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          <span className="inline-flex items-center gap-2">
+                            <span
+                              className="h-2.5 w-2.5 rounded-full border"
+                              style={{ backgroundColor: s.courses?.color ?? "transparent" }}
+                            />
+                            {s.courses?.name ?? "—"}
+                          </span>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {editingId === s.id ? (
+                            <Input
+                              type="number"
+                              value={editPoints}
+                              onChange={(e) => setEditPoints(e.target.value)}
+                              className="w-24 ml-auto"
+                              autoFocus
+                            />
+                          ) : (
+                            <span className="font-bold text-primary tabular-nums">{s.points}</span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          {editingId === s.id ? (
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                size="sm"
+                                onClick={() => {
+                                  const pts = parseInt(editPoints, 10);
+                                  if (isNaN(pts)) return toast.error("Enter a number");
+                                  updateMut.mutate({ id: s.id, pts });
+                                }}
+                              >
+                                Save
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setEditingId(null)}
+                              >
+                                Cancel
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="flex justify-end gap-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => {
+                                  setEditingId(s.id);
+                                  setEditPoints(String(s.points));
+                                }}
+                              >
+                                <Pencil className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => setDeleteId(s.id)}
+                              >
+                                <Trash2 className="h-4 w-4 text-destructive" />
+                              </Button>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+        </>
+      )}
 
       <AlertDialog open={!!deleteId} onOpenChange={(o) => !o && setDeleteId(null)}>
         <AlertDialogContent>
