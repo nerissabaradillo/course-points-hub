@@ -119,3 +119,10 @@
   .shadow-card { box-shadow: var(--shadow-card); }
   .transition-smooth { transition: var(--transition-smooth); }
 }
+
+
+#lovable-badge {
+  display: none !important;
+}
+``` [2]
+
