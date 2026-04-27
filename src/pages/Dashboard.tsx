@@ -32,25 +32,27 @@ const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
 
   const courseMap = new Map((courses ?? []).map((c) => [c.id, c.name]));
 
-  return (events ?? []).map((ev) => {
-    const evScores = (scores ?? []).filter((s) => s.event_id === ev.id);
-    const totals = new Map<string, number>();
-    let lastUpdated: string | null = null;
-    evScores.forEach((s) => {
-      totals.set(s.course_id, (totals.get(s.course_id) ?? 0) + (s.points ?? 0));
-      if (!lastUpdated || (s.updated_at && s.updated_at > lastUpdated)) {
-        lastUpdated = s.updated_at;
-      }
-    });
-    const rows = Array.from(totals.entries())
-      .map(([course_id, points]) => ({
-        course_id,
-        course_name: courseMap.get(course_id) ?? "Unknown",
-        points,
-      }))
-      .sort((a, b) => b.points - a.points);
-    return { event_id: ev.id, event_name: ev.name, last_updated: lastUpdated, rows };
-  });
+  return (events ?? [])
+    .map((ev) => {
+      const evScores = (scores ?? []).filter((s) => s.event_id === ev.id);
+      const totals = new Map<string, number>();
+      let lastUpdated: string | null = null;
+      evScores.forEach((s) => {
+        totals.set(s.course_id, (totals.get(s.course_id) ?? 0) + (s.points ?? 0));
+        if (!lastUpdated || (s.updated_at && s.updated_at > lastUpdated)) {
+          lastUpdated = s.updated_at;
+        }
+      });
+      const rows = Array.from(totals.entries())
+        .map(([course_id, points]) => ({
+          course_id,
+          course_name: courseMap.get(course_id) ?? "Unknown",
+          points,
+        }))
+        .sort((a, b) => b.points - a.points);
+      return { event_id: ev.id, event_name: ev.name, last_updated: lastUpdated, rows };
+    })
+    .filter((ev) => ev.rows.length > 0);
 };
 
 const fetchRankings = async (): Promise<RankingRow[]> => {
