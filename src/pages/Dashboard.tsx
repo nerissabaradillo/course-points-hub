@@ -197,13 +197,14 @@ export default function Dashboard() {
         <Card className="lg:col-span-3 bg-gradient-card">
           <CardHeader>
             <CardTitle>Points by Course</CardTitle>
+            <p className="text-xs text-muted-foreground">Stacked breakdown by event</p>
           </CardHeader>
           <CardContent>
-            {isLoading ? (
-              <Skeleton className="h-[320px] w-full" />
+            {isLoading || eventsLoading ? (
+              <Skeleton className="h-[360px] w-full" />
             ) : !rankings || rankings.length === 0 ? (
               <EmptyState message="No data yet — add courses and scores to populate the chart." />
-            ) : (
+            ) : breakdown.events.length === 0 ? (
               <ResponsiveContainer width="100%" height={320}>
                 <BarChart data={rankings} margin={{ top: 12, right: 12, left: -12, bottom: 0 }}>
                   <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
@@ -223,6 +224,36 @@ export default function Dashboard() {
                       <Cell key={idx} fill={idx < 3 ? barColors[idx] : "hsl(var(--primary))"} />
                     ))}
                   </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            ) : (
+              <ResponsiveContainer width="100%" height={360}>
+                <BarChart data={breakdown.data} margin={{ top: 12, right: 12, left: -12, bottom: 0 }}>
+                  <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="course_name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+                  <YAxis tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
+                  <RTooltip
+                    cursor={{ fill: "hsl(var(--muted))" }}
+                    contentStyle={{
+                      background: "hsl(var(--popover))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: 8,
+                      color: "hsl(var(--popover-foreground))",
+                    }}
+                  />
+                  <Legend wrapperStyle={{ fontSize: 12 }} />
+                  {breakdown.events.map((ev, idx) => {
+                    const isLast = idx === breakdown.events.length - 1;
+                    return (
+                      <Bar
+                        key={ev.id}
+                        dataKey={ev.name}
+                        stackId="points"
+                        fill={eventColor(idx)}
+                        radius={isLast ? [8, 8, 0, 0] : [0, 0, 0, 0]}
+                      />
+                    );
+                  })}
                 </BarChart>
               </ResponsiveContainer>
             )}
