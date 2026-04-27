@@ -118,6 +118,27 @@ export default function Dashboard() {
     };
   }, [rankings]);
 
+  // Build stacked breakdown: one row per course, one key per event
+  const breakdown = useMemo(() => {
+    if (!rankings || !eventBoards) return { data: [], events: [] as { id: string; name: string }[] };
+    const events = eventBoards.map((ev) => ({ id: ev.event_id, name: ev.event_name }));
+    const data = rankings.map((r) => {
+      const row: Record<string, string | number> = {
+        course_name: r.course_name,
+        total_points: r.total_points,
+      };
+      eventBoards.forEach((ev) => {
+        const found = ev.rows.find((x) => x.course_id === r.course_id);
+        row[ev.event_name] = found?.points ?? 0;
+      });
+      return row;
+    });
+    return { data, events };
+  }, [rankings, eventBoards]);
+
+  // Distinct HSL colors for events (cycled around the wheel)
+  const eventColor = (idx: number) => `hsl(${(idx * 47) % 360} 70% 55%)`;
+
   return (
     <div className="space-y-8">
       {/* Hero */}
