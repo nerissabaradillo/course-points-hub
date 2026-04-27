@@ -442,9 +442,6 @@ export default function Dashboard() {
         <div className="mb-4 flex items-end justify-between gap-3 flex-wrap">
           <div>
             <h2 className="text-xl font-bold">Leaderboards by Event</h2>
-            <p className="text-sm text-muted-foreground">
-              Only events with recorded scores are shown. Events updated within the last 24 hours are marked recent.
-            </p>
           </div>
         </div>
 
