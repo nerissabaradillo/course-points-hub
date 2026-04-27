@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 interface RankingRow {
   course_id: string;
   course_name: string;
+  course_image: string | null;
+  course_color: string | null;
   total_points: number;
 }
 
@@ -17,20 +19,28 @@ interface EventLeaderboard {
   event_id: string;
   event_name: string;
   last_updated: string | null;
-  rows: { course_id: string; course_name: string; points: number }[];
+  rows: {
+    course_id: string;
+    course_name: string;
+    course_image: string | null;
+    course_color: string | null;
+    points: number;
+  }[];
 }
 
 const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
   const [{ data: events, error: eErr }, { data: courses, error: cErr }, { data: scores, error: sErr }] = await Promise.all([
     supabase.from("events").select("id, name").order("name"),
-    supabase.from("courses").select("id, name"),
+    supabase.from("courses").select("id, name, image_url, color"),
     supabase.from("scores").select("event_id, course_id, points, updated_at"),
   ]);
   if (eErr) throw eErr;
   if (cErr) throw cErr;
   if (sErr) throw sErr;
 
-  const courseMap = new Map((courses ?? []).map((c) => [c.id, c.name]));
+  const courseMap = new Map(
+    (courses ?? []).map((c) => [c.id, { name: c.name, image: c.image_url, color: c.color }])
+  );
 
   return (events ?? [])
     .map((ev) => {
@@ -44,11 +54,16 @@ const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
         }
       });
       const rows = Array.from(totals.entries())
-        .map(([course_id, points]) => ({
-          course_id,
-          course_name: courseMap.get(course_id) ?? "Unknown",
-          points,
-        }))
+        .map(([course_id, points]) => {
+          const c = courseMap.get(course_id);
+          return {
+            course_id,
+            course_name: c?.name ?? "Unknown",
+            course_image: c?.image ?? null,
+            course_color: c?.color ?? null,
+            points,
+          };
+        })
         .sort((a, b) => b.points - a.points);
       return { event_id: ev.id, event_name: ev.name, last_updated: lastUpdated, rows };
     })
@@ -57,7 +72,7 @@ const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
 
 const fetchRankings = async (): Promise<RankingRow[]> => {
   const [{ data: courses, error: cErr }, { data: scores, error: sErr }] = await Promise.all([
-    supabase.from("courses").select("id, name").order("name"),
+    supabase.from("courses").select("id, name, image_url, color").order("name"),
     supabase.from("scores").select("course_id, points"),
   ]);
   if (cErr) throw cErr;
@@ -72,6 +87,8 @@ const fetchRankings = async (): Promise<RankingRow[]> => {
     .map((c) => ({
       course_id: c.id,
       course_name: c.name,
+      course_image: c.image_url,
+      course_color: c.color,
       total_points: totals.get(c.id) ?? 0,
     }))
     .sort((a, b) => b.total_points - a.total_points);
@@ -175,11 +192,25 @@ export default function Dashboard() {
               return (
                 <div
                   key={r.course_id}
-                  className={`rounded-2xl ring-2 ${s.ring} bg-card p-6 shadow-card transition-smooth hover:shadow-elegant hover:-translate-y-1`}
+                  className={`relative overflow-hidden rounded-2xl ring-2 ${s.ring} bg-card p-6 shadow-card transition-smooth hover:shadow-elegant hover:-translate-y-1`}
                 >
-                  <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${s.bg} ${s.text}`}>
-                    <Icon className="h-3.5 w-3.5" />
-                    {s.label}
+                  {r.course_color && (
+                    <div
+                      className="absolute inset-x-0 top-0 h-1.5"
+                      style={{ background: r.course_color }}
+                    />
+                  )}
+                  <div className="flex items-center gap-3">
+                    <CourseAvatar
+                      name={r.course_name}
+                      image={r.course_image}
+                      color={r.course_color}
+                      size="lg"
+                    />
+                    <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${s.bg} ${s.text}`}>
+                      <Icon className="h-3.5 w-3.5" />
+                      {s.label}
+                    </div>
                   </div>
                   <div className="mt-4 text-2xl font-bold">{r.course_name}</div>
                   <div className="mt-1 text-3xl font-extrabold text-primary">
@@ -220,8 +251,11 @@ export default function Dashboard() {
                     }}
                   />
                   <Bar dataKey="total_points" radius={[8, 8, 0, 0]}>
-                    {rankings.map((_, idx) => (
-                      <Cell key={idx} fill={idx < 3 ? barColors[idx] : "hsl(var(--primary))"} />
+                    {rankings.map((r, idx) => (
+                      <Cell
+                        key={idx}
+                        fill={r.course_color ?? (idx < 3 ? barColors[idx] : "hsl(var(--primary))")}
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -279,10 +313,11 @@ export default function Dashboard() {
                   <li
                     key={r.course_id}
                     className="flex items-center justify-between rounded-lg border border-border bg-background/50 px-4 py-3 transition-smooth hover:bg-secondary"
+                    style={r.course_color ? { borderLeft: `4px solid ${r.course_color}` } : undefined}
                   >
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 min-w-0">
                       <span
-                        className={`grid h-8 w-8 place-items-center rounded-full text-sm font-bold ${
+                        className={`grid h-8 w-8 place-items-center rounded-full text-sm font-bold shrink-0 ${
                           i === 0
                             ? "bg-gradient-gold text-accent-foreground"
                             : i === 1
@@ -294,9 +329,14 @@ export default function Dashboard() {
                       >
                         {i + 1}
                       </span>
-                      <span className="font-medium">{r.course_name}</span>
+                      <CourseAvatar
+                        name={r.course_name}
+                        image={r.course_image}
+                        color={r.course_color}
+                      />
+                      <span className="font-medium truncate">{r.course_name}</span>
                     </div>
-                    <span className="font-bold text-primary">{r.total_points} pts</span>
+                    <span className="font-bold text-primary shrink-0">{r.total_points} pts</span>
                   </li>
                 ))}
               </ol>
@@ -358,6 +398,7 @@ export default function Dashboard() {
                         <li
                           key={r.course_id}
                           className="flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2"
+                          style={r.course_color ? { borderLeft: `3px solid ${r.course_color}` } : undefined}
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <span
@@ -373,6 +414,12 @@ export default function Dashboard() {
                             >
                               {i + 1}
                             </span>
+                            <CourseAvatar
+                              name={r.course_name}
+                              image={r.course_image}
+                              color={r.course_color}
+                              size="sm"
+                            />
                             <span className="text-sm font-medium truncate">{r.course_name}</span>
                           </div>
                           <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
@@ -417,6 +464,35 @@ function StatCard({
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function CourseAvatar({
+  name,
+  image,
+  color,
+  size = "md",
+}: {
+  name: string;
+  image: string | null;
+  color: string | null;
+  size?: "sm" | "md" | "lg";
+}) {
+  const dim = size === "sm" ? "h-7 w-7 text-[10px]" : size === "lg" ? "h-12 w-12 text-sm" : "h-9 w-9 text-xs";
+  return (
+    <div
+      className={`${dim} shrink-0 rounded-full overflow-hidden border border-border grid place-items-center font-bold`}
+      style={{
+        background: color ?? "hsl(var(--secondary))",
+        color: color ? "#fff" : "hsl(var(--foreground))",
+      }}
+    >
+      {image ? (
+        <img src={image} alt={name} className="h-full w-full object-cover" />
+      ) : (
+        name.slice(0, 2).toUpperCase()
+      )}
+    </div>
   );
 }
 

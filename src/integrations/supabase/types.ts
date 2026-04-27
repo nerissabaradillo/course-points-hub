@@ -16,18 +16,24 @@ export type Database = {
     Tables: {
       courses: {
         Row: {
+          color: string | null
           created_at: string
           id: string
+          image_url: string | null
           name: string
         }
         Insert: {
+          color?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           name: string
         }
         Update: {
+          color?: string | null
           created_at?: string
           id?: string
+          image_url?: string | null
           name?: string
         }
         Relationships: []
