@@ -206,18 +206,48 @@ export default function AdminScores() {
               <CardDescription>All actions below apply to this event.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Select value={eventId} onValueChange={setEventId}>
-                <SelectTrigger className="max-w-sm">
-                  <SelectValue placeholder="Choose an event" />
-                </SelectTrigger>
-                <SelectContent>
-                  {events?.map((ev) => (
-                    <SelectItem key={ev.id} value={ev.id}>
-                      {ev.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={eventPickerOpen} onOpenChange={setEventPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={eventPickerOpen}
+                    className="max-w-sm w-full justify-between font-normal"
+                  >
+                    {selectedEvent?.name ?? "Choose an event"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search events..." />
+                    <CommandList>
+                      <CommandEmpty>No event found.</CommandEmpty>
+                      <CommandGroup>
+                        {events?.map((ev) => (
+                          <CommandItem
+                            key={ev.id}
+                            value={ev.name}
+                            onSelect={() => {
+                              setEventId(ev.id);
+                              setCourseId("");
+                              setEventPickerOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                eventId === ev.id ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            {ev.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </CardContent>
           </Card>
 
