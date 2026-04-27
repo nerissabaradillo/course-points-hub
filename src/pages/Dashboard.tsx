@@ -259,7 +259,7 @@ export default function Dashboard() {
           <div>
             <h2 className="text-xl font-bold">Leaderboards by Event</h2>
             <p className="text-sm text-muted-foreground">
-              Rankings per sport event. Events updated within the last 24 hours are marked recent.
+              Only events with recorded scores are shown. Events updated within the last 24 hours are marked recent.
             </p>
           </div>
         </div>
