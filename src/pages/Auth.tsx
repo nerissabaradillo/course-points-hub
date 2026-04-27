@@ -86,8 +86,6 @@ export default function Auth() {
                 {submitting && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
                 {mode === "signin" ? "Sign in" : "Create account"}
               </Button>
-              {mode === "signup" && (
-              )}
             </TabsContent>
           ))}
         </Tabs>
