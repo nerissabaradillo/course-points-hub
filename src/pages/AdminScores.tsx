@@ -107,6 +107,17 @@ export default function AdminScores() {
     mutationFn: async () => {
       const pts = parseInt(points, 10);
       if (!courseId || !eventId || isNaN(pts)) throw new Error("All fields are required");
+      // Prevent duplicate score for the same course in this event
+      const { data: existing, error: checkErr } = await supabase
+        .from("scores")
+        .select("id")
+        .eq("event_id", eventId)
+        .eq("course_id", courseId)
+        .maybeSingle();
+      if (checkErr) throw checkErr;
+      if (existing) {
+        throw new Error("This course already has a score for this event. Edit it instead.");
+      }
       const { error } = await supabase.from("scores").insert({
         course_id: courseId,
         event_id: eventId,
