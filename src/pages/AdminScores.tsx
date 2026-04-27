@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Pencil, Trash2, Plus, Loader2, Trophy } from "lucide-react";
+import { Pencil, Trash2, Plus, Loader2, Trophy, Check, ChevronsUpDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +58,7 @@ export default function AdminScores() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPoints, setEditPoints] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [eventPickerOpen, setEventPickerOpen] = useState(false);
 
   const { data: courses } = useQuery({
     queryKey: ["courses"],
@@ -96,6 +107,17 @@ export default function AdminScores() {
     mutationFn: async () => {
       const pts = parseInt(points, 10);
       if (!courseId || !eventId || isNaN(pts)) throw new Error("All fields are required");
+      // Prevent duplicate score for the same course in this event
+      const { data: existing, error: checkErr } = await supabase
+        .from("scores")
+        .select("id")
+        .eq("event_id", eventId)
+        .eq("course_id", courseId)
+        .maybeSingle();
+      if (checkErr) throw checkErr;
+      if (existing) {
+        throw new Error("This course already has a score for this event. Edit it instead.");
+      }
       const { error } = await supabase.from("scores").insert({
         course_id: courseId,
         event_id: eventId,
@@ -147,6 +169,18 @@ export default function AdminScores() {
     [scores, eventId],
   );
 
+  // Courses already scored in this event — hidden from the add-form picker
+  const scoredCourseIds = useMemo(
+    () => new Set(eventScores.map((s) => s.course_id)),
+    [eventScores],
+  );
+  const availableCourses = useMemo(
+    () => (courses ?? []).filter((c) => !scoredCourseIds.has(c.id)),
+    [courses, scoredCourseIds],
+  );
+  const allCoursesScored =
+    !!courses?.length && availableCourses.length === 0;
+
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
@@ -172,18 +206,48 @@ export default function AdminScores() {
               <CardDescription>All actions below apply to this event.</CardDescription>
             </CardHeader>
             <CardContent>
-              <Select value={eventId} onValueChange={setEventId}>
-                <SelectTrigger className="max-w-sm">
-                  <SelectValue placeholder="Choose an event" />
-                </SelectTrigger>
-                <SelectContent>
-                  {events?.map((ev) => (
-                    <SelectItem key={ev.id} value={ev.id}>
-                      {ev.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Popover open={eventPickerOpen} onOpenChange={setEventPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={eventPickerOpen}
+                    className="max-w-sm w-full justify-between font-normal"
+                  >
+                    {selectedEvent?.name ?? "Choose an event"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search events..." />
+                    <CommandList>
+                      <CommandEmpty>No event found.</CommandEmpty>
+                      <CommandGroup>
+                        {events?.map((ev) => (
+                          <CommandItem
+                            key={ev.id}
+                            value={ev.name}
+                            onSelect={() => {
+                              setEventId(ev.id);
+                              setCourseId("");
+                              setEventPickerOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                eventId === ev.id ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            {ev.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </CardContent>
           </Card>
 
@@ -192,44 +256,53 @@ export default function AdminScores() {
               <CardTitle className="text-base">
                 Add score to <span className="text-primary">{selectedEvent?.name}</span>
               </CardTitle>
+              <CardDescription>
+                Each course can only have one score per event.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <form
-                className="grid gap-3 sm:grid-cols-[1fr_140px_auto]"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  createMut.mutate();
-                }}
-              >
-                <Select value={courseId} onValueChange={setCourseId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select course" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {courses?.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {allCoursesScored ? (
+                <p className="text-sm text-muted-foreground">
+                  Every course already has a score for this event. Edit existing entries below.
+                </p>
+              ) : (
+                <form
+                  className="grid gap-3 sm:grid-cols-[1fr_140px_auto]"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    createMut.mutate();
+                  }}
+                >
+                  <Select value={courseId} onValueChange={setCourseId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select course" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCourses.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-                <Input
-                  type="number"
-                  value={points}
-                  onChange={(e) => setPoints(e.target.value)}
-                  placeholder="Points"
-                />
+                  <Input
+                    type="number"
+                    value={points}
+                    onChange={(e) => setPoints(e.target.value)}
+                    placeholder="Points"
+                  />
 
-                <Button type="submit" disabled={createMut.isPending}>
-                  {createMut.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )}
-                  <span className="ml-2">Save</span>
-                </Button>
-              </form>
+                  <Button type="submit" disabled={createMut.isPending}>
+                    {createMut.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                    <span className="ml-2">Save</span>
+                  </Button>
+                </form>
+              )}
             </CardContent>
           </Card>
 
