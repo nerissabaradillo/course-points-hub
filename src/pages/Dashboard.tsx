@@ -81,7 +81,7 @@ export default function Dashboard() {
             <TrendingUp className="h-3.5 w-3.5" />
             Live Leaderboard
           </div>
-          <h1 className="mt-4 text-3xl sm:text-5xl font-bold tracking-tight">Intramurals 2026</h1>
+          <h1 className="mt-4 text-3xl sm:text-5xl font-bold tracking-tight">Pakusganay 2026</h1>
           <p className="mt-2 max-w-xl text-primary-foreground/85">
             Track every point. Crown the champion course.
           </p>
