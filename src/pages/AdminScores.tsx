@@ -58,6 +58,7 @@ export default function AdminScores() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPoints, setEditPoints] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [eventPickerOpen, setEventPickerOpen] = useState(false);
 
   const { data: courses } = useQuery({
     queryKey: ["courses"],
