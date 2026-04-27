@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import nemsuLogo from "@/assets/nemsu-logo.png";
+import pakusganayBanner from "@/assets/pakusganay-2026-banner.png";
 
 
 interface RankingRow {
@@ -161,9 +162,11 @@ export default function Dashboard() {
   return (
     <div className="space-y-8">
       {/* Hero */}
-      <section className="relative overflow-hidden rounded-2xl bg-gradient-hero p-8 sm:p-12 text-primary-foreground shadow-elegant">
-        <div className="absolute -top-16 -right-16 h-64 w-64 rounded-full bg-accent/30 blur-3xl" />
-        <div className="absolute -bottom-20 -left-10 h-56 w-56 rounded-full bg-primary-glow/40 blur-3xl" />
+      <section
+        className="relative overflow-hidden rounded-2xl p-8 sm:p-12 text-primary-foreground shadow-elegant bg-cover bg-center"
+        style={{ backgroundImage: `url(${pakusganayBanner})` }}
+      >
+        <div className="absolute inset-0 bg-black/55" />
         <div className="relative">
           {/* University banner */}
           <div className="flex items-center justify-start gap-4 sm:gap-5 rounded-xl bg-primary-foreground/10 px-4 py-3 backdrop-blur-md ring-1 ring-primary-foreground/20">
