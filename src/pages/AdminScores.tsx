@@ -169,6 +169,18 @@ export default function AdminScores() {
     [scores, eventId],
   );
 
+  // Courses already scored in this event — hidden from the add-form picker
+  const scoredCourseIds = useMemo(
+    () => new Set(eventScores.map((s) => s.course_id)),
+    [eventScores],
+  );
+  const availableCourses = useMemo(
+    () => (courses ?? []).filter((c) => !scoredCourseIds.has(c.id)),
+    [courses, scoredCourseIds],
+  );
+  const allCoursesScored =
+    !!courses?.length && availableCourses.length === 0;
+
   return (
     <div className="space-y-6 max-w-5xl">
       <div>
