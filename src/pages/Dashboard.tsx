@@ -176,7 +176,10 @@ export default function Dashboard() {
               <h2 className="text-lg sm:text-3xl font-bold leading-tight tracking-tight">
                 North Eastern Mindanao State University
               </h2>
-              <p className="text-sm sm:text-lg text-primary-foreground/85 font-medium">
+              <p className="text-sm sm:text-lg text-primary-foreground/90 font-semibold leading-snug">
+                College of Information Technology
+              </p>
+              <p className="text-xs sm:text-base text-primary-foreground/80 font-medium leading-snug">
                 Department of Computer Studies
               </p>
             </div>
