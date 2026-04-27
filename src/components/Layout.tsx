@@ -27,7 +27,7 @@ export default function Layout() {
             <div className="grid h-9 w-9 place-items-center rounded-lg bg-gradient-hero text-primary-foreground shadow-elegant">
               <Trophy className="h-5 w-5" />
             </div>
-            <span className="hidden sm:inline">Intramurals</span>
+            <span className="hidden sm:inline">Pakusganay</span>
           </Link>
 
           <nav className="flex items-center gap-1">
