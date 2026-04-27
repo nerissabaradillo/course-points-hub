@@ -256,44 +256,53 @@ export default function AdminScores() {
               <CardTitle className="text-base">
                 Add score to <span className="text-primary">{selectedEvent?.name}</span>
               </CardTitle>
+              <CardDescription>
+                Each course can only have one score per event.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <form
-                className="grid gap-3 sm:grid-cols-[1fr_140px_auto]"
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  createMut.mutate();
-                }}
-              >
-                <Select value={courseId} onValueChange={setCourseId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select course" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {courses?.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {allCoursesScored ? (
+                <p className="text-sm text-muted-foreground">
+                  Every course already has a score for this event. Edit existing entries below.
+                </p>
+              ) : (
+                <form
+                  className="grid gap-3 sm:grid-cols-[1fr_140px_auto]"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    createMut.mutate();
+                  }}
+                >
+                  <Select value={courseId} onValueChange={setCourseId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select course" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {availableCourses.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
 
-                <Input
-                  type="number"
-                  value={points}
-                  onChange={(e) => setPoints(e.target.value)}
-                  placeholder="Points"
-                />
+                  <Input
+                    type="number"
+                    value={points}
+                    onChange={(e) => setPoints(e.target.value)}
+                    placeholder="Points"
+                  />
 
-                <Button type="submit" disabled={createMut.isPending}>
-                  {createMut.isPending ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <Plus className="h-4 w-4" />
-                  )}
-                  <span className="ml-2">Save</span>
-                </Button>
-              </form>
+                  <Button type="submit" disabled={createMut.isPending}>
+                    {createMut.isPending ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Plus className="h-4 w-4" />
+                    )}
+                    <span className="ml-2">Save</span>
+                  </Button>
+                </form>
+              )}
             </CardContent>
           </Card>
 
