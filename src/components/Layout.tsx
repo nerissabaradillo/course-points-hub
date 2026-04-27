@@ -94,7 +94,7 @@ export default function Layout() {
       </main>
 
       <footer className="border-t border-border py-6 text-center text-sm text-muted-foreground">
-        Intramurals Scoring System · Powered by Lovable Cloud
+        Intramurals Scoring System
       </footer>
     </div>
   );
