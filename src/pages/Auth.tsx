@@ -87,9 +87,6 @@ export default function Auth() {
                 {mode === "signin" ? "Sign in" : "Create account"}
               </Button>
               {mode === "signup" && (
-                <p className="text-xs text-muted-foreground text-center">
-                  The first account becomes admin automatically.
-                </p>
               )}
             </TabsContent>
           ))}
