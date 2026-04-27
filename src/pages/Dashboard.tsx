@@ -250,6 +250,92 @@ export default function Dashboard() {
           </CardContent>
         </Card>
       </section>
+
+      {/* Per-event leaderboards */}
+      <section>
+        <div className="mb-4 flex items-end justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-xl font-bold">Leaderboards by Event</h2>
+            <p className="text-sm text-muted-foreground">
+              Rankings per sport event. Events updated within the last 24 hours are marked recent.
+            </p>
+          </div>
+        </div>
+
+        {eventsLoading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-64 w-full" />
+            ))}
+          </div>
+        ) : !eventBoards || eventBoards.length === 0 ? (
+          <Card className="bg-gradient-card">
+            <CardContent className="p-6">
+              <EmptyState message="No events yet. Add events from the admin panel." />
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {eventBoards.map((ev) => {
+              const isRecent =
+                ev.last_updated &&
+                Date.now() - new Date(ev.last_updated).getTime() <= 24 * 60 * 60 * 1000;
+              return (
+                <Card key={ev.event_id} className="bg-gradient-card transition-smooth hover:shadow-elegant">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <CardTitle className="text-base">{ev.event_name}</CardTitle>
+                      {isRecent && (
+                        <Badge className="bg-gradient-gold text-accent-foreground hover:opacity-90 gap-1">
+                          <Clock className="h-3 w-3" />
+                          Recent
+                        </Badge>
+                      )}
+                    </div>
+                    {ev.last_updated && (
+                      <p className="text-xs text-muted-foreground">
+                        Updated {new Date(ev.last_updated).toLocaleString()}
+                      </p>
+                    )}
+                  </CardHeader>
+                  <CardContent>
+                    {ev.rows.length === 0 ? (
+                      <p className="text-sm text-muted-foreground py-4 text-center">No scores recorded yet.</p>
+                    ) : (
+                      <ol className="space-y-2">
+                        {ev.rows.map((r, i) => (
+                          <li
+                            key={r.course_id}
+                            className="flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2"
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span
+                                className={`grid h-6 w-6 place-items-center rounded-full text-xs font-bold shrink-0 ${
+                                  i === 0
+                                    ? "bg-gradient-gold text-accent-foreground"
+                                    : i === 1
+                                    ? "bg-silver text-foreground"
+                                    : i === 2
+                                    ? "bg-bronze text-primary-foreground"
+                                    : "bg-secondary text-foreground"
+                                }`}
+                              >
+                                {i + 1}
+                              </span>
+                              <span className="text-sm font-medium truncate">{r.course_name}</span>
+                            </div>
+                            <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
+                          </li>
+                        ))}
+                      </ol>
+                    )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
