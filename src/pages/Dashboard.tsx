@@ -430,29 +430,6 @@ export default function Dashboard() {
                       </tr>
                     ))}
                   </tbody>
-                  {(eventBoards ?? []).length > 0 && (
-                    <tfoot className="bg-muted/30">
-                      <tr>
-                        <td className="sticky left-0 z-10 bg-muted/30 px-4 py-3 font-semibold text-muted-foreground">
-                          Event Total
-                        </td>
-                        {(eventBoards ?? []).map((ev) => {
-                          const sum = ev.rows.reduce((s, x) => s + x.points, 0);
-                          return (
-                            <td
-                              key={ev.event_id}
-                              className="px-3 py-3 text-right font-semibold tabular-nums whitespace-nowrap"
-                            >
-                              {sum}
-                            </td>
-                          );
-                        })}
-                        <td className="px-4 py-3 text-right font-bold tabular-nums whitespace-nowrap">
-                          {rankings.reduce((s, r) => s + r.total_points, 0)}
-                        </td>
-                      </tr>
-                    </tfoot>
-                  )}
                 </table>
               </div>
             )}
