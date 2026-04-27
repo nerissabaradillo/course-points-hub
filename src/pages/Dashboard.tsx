@@ -102,6 +102,11 @@ export default function Dashboard() {
     queryFn: fetchRankings,
   });
 
+  const { data: eventBoards, isLoading: eventsLoading } = useQuery({
+    queryKey: ["event-leaderboards"],
+    queryFn: fetchEventLeaderboards,
+  });
+
   const totals = useMemo(() => {
     const totalPoints = rankings?.reduce((s, r) => s + r.total_points, 0) ?? 0;
     return {
