@@ -174,8 +174,11 @@ export default function Dashboard() {
             />
             <div className="flex flex-col text-left">
               <h2 className="text-lg sm:text-3xl font-bold leading-tight tracking-tight">
-                North Eastern Mindanao State University
+                North Eastern Mindanao State University - Lianga Campus
               </h2>
+               <p className="text-sm sm:text-lg text-primary-foreground/90 font-semibold leading-snug">
+                Lianga, Surigao del Sur
+              </p>
               <p className="text-sm sm:text-lg text-primary-foreground/90 font-semibold leading-snug">
                 College of Information Technology
               </p>
