@@ -251,8 +251,11 @@ export default function Dashboard() {
                     }}
                   />
                   <Bar dataKey="total_points" radius={[8, 8, 0, 0]}>
-                    {rankings.map((_, idx) => (
-                      <Cell key={idx} fill={idx < 3 ? barColors[idx] : "hsl(var(--primary))"} />
+                    {rankings.map((r, idx) => (
+                      <Cell
+                        key={idx}
+                        fill={r.course_color ?? (idx < 3 ? barColors[idx] : "hsl(var(--primary))")}
+                      />
                     ))}
                   </Bar>
                 </BarChart>
@@ -395,6 +398,7 @@ export default function Dashboard() {
                         <li
                           key={r.course_id}
                           className="flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2"
+                          style={r.course_color ? { borderLeft: `3px solid ${r.course_color}` } : undefined}
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <span
@@ -410,6 +414,12 @@ export default function Dashboard() {
                             >
                               {i + 1}
                             </span>
+                            <CourseAvatar
+                              name={r.course_name}
+                              image={r.course_image}
+                              color={r.course_color}
+                              size="sm"
+                            />
                             <span className="text-sm font-medium truncate">{r.course_name}</span>
                           </div>
                           <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
