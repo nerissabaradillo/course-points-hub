@@ -10,6 +10,8 @@ import { Badge } from "@/components/ui/badge";
 interface RankingRow {
   course_id: string;
   course_name: string;
+  course_image: string | null;
+  course_color: string | null;
   total_points: number;
 }
 
@@ -57,7 +59,7 @@ const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
 
 const fetchRankings = async (): Promise<RankingRow[]> => {
   const [{ data: courses, error: cErr }, { data: scores, error: sErr }] = await Promise.all([
-    supabase.from("courses").select("id, name").order("name"),
+    supabase.from("courses").select("id, name, image_url, color").order("name"),
     supabase.from("scores").select("course_id, points"),
   ]);
   if (cErr) throw cErr;
@@ -72,6 +74,8 @@ const fetchRankings = async (): Promise<RankingRow[]> => {
     .map((c) => ({
       course_id: c.id,
       course_name: c.name,
+      course_image: c.image_url,
+      course_color: c.color,
       total_points: totals.get(c.id) ?? 0,
     }))
     .sort((a, b) => b.total_points - a.total_points);
