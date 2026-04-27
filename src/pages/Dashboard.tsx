@@ -92,7 +92,7 @@ export default function Dashboard() {
       <section className="grid gap-4 sm:grid-cols-3">
         <StatCard label="Current Leader" value={totals.leader} icon={Trophy} accent />
         <StatCard label="Total Courses" value={totals.courses.toString()} icon={Users} />
-        <StatCard label="Total Points" value={totals.points.toLocaleString()} icon={TrendingUp} />
+        {/* <StatCard label="Total Points" value={totals.points.toLocaleString()} icon={TrendingUp} /> */}
       </section>
 
       {/* Podium */}
