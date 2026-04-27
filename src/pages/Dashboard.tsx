@@ -345,6 +345,121 @@ export default function Dashboard() {
         </Card>
       </section>
 
+      {/* Full points breakdown matrix */}
+      <section>
+        <div className="mb-4">
+          <h2 className="text-xl font-bold">Points Breakdown by Course</h2>
+          <p className="text-sm text-muted-foreground">
+            Full per-event points for every course, with totals.
+          </p>
+        </div>
+
+        <Card className="bg-gradient-card">
+          <CardContent className="p-0">
+            {isLoading || eventsLoading ? (
+              <div className="p-6 space-y-2">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-10 w-full" />
+                ))}
+              </div>
+            ) : !rankings || rankings.length === 0 ? (
+              <div className="p-6">
+                <EmptyState message="No data yet — add courses and scores to populate the breakdown." />
+              </div>
+            ) : (
+              <div className="w-full overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40">
+                    <tr className="border-b border-border">
+                      <th className="sticky left-0 z-10 bg-muted/40 px-4 py-3 text-left font-semibold">
+                        Course
+                      </th>
+                      {(eventBoards ?? []).map((ev) => (
+                        <th
+                          key={ev.event_id}
+                          className="px-3 py-3 text-right font-semibold whitespace-nowrap text-muted-foreground"
+                        >
+                          {ev.event_name}
+                        </th>
+                      ))}
+                      <th className="px-4 py-3 text-right font-semibold">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rankings.map((r, i) => (
+                      <tr
+                        key={r.course_id}
+                        className="border-b border-border last:border-0 transition-smooth hover:bg-secondary/50"
+                      >
+                        <td
+                          className="sticky left-0 z-10 bg-card px-4 py-3"
+                          style={r.course_color ? { borderLeft: `4px solid ${r.course_color}` } : undefined}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">
+                              {i + 1}
+                            </span>
+                            <CourseAvatar
+                              name={r.course_name}
+                              image={r.course_image}
+                              color={r.course_color}
+                              size="sm"
+                            />
+                            <span className="font-medium truncate">{r.course_name}</span>
+                          </div>
+                        </td>
+                        {(eventBoards ?? []).map((ev) => {
+                          const found = ev.rows.find((x) => x.course_id === r.course_id);
+                          const pts = found?.points ?? 0;
+                          const isTop =
+                            ev.rows.length > 0 && ev.rows[0].course_id === r.course_id && pts > 0;
+                          return (
+                            <td
+                              key={ev.event_id}
+                              className={`px-3 py-3 text-right tabular-nums whitespace-nowrap ${
+                                pts === 0 ? "text-muted-foreground/60" : "text-foreground"
+                              } ${isTop ? "font-bold text-primary" : ""}`}
+                            >
+                              {pts}
+                            </td>
+                          );
+                        })}
+                        <td className="px-4 py-3 text-right font-bold text-primary tabular-nums whitespace-nowrap">
+                          {r.total_points}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  {(eventBoards ?? []).length > 0 && (
+                    <tfoot className="bg-muted/30">
+                      <tr>
+                        <td className="sticky left-0 z-10 bg-muted/30 px-4 py-3 font-semibold text-muted-foreground">
+                          Event Total
+                        </td>
+                        {(eventBoards ?? []).map((ev) => {
+                          const sum = ev.rows.reduce((s, x) => s + x.points, 0);
+                          return (
+                            <td
+                              key={ev.event_id}
+                              className="px-3 py-3 text-right font-semibold tabular-nums whitespace-nowrap"
+                            >
+                              {sum}
+                            </td>
+                          );
+                        })}
+                        <td className="px-4 py-3 text-right font-bold tabular-nums whitespace-nowrap">
+                          {rankings.reduce((s, r) => s + r.total_points, 0)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  )}
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </section>
+
       {/* Per-event leaderboards */}
       <section>
         <div className="mb-4 flex items-end justify-between gap-3 flex-wrap">
