@@ -1,16 +1,57 @@
 import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip as RTooltip, Cell } from "recharts";
-import { Trophy, Medal, Award, TrendingUp, Users } from "lucide-react";
+import { Trophy, Medal, Award, TrendingUp, Users, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 
 interface RankingRow {
   course_id: string;
   course_name: string;
   total_points: number;
 }
+
+interface EventLeaderboard {
+  event_id: string;
+  event_name: string;
+  last_updated: string | null;
+  rows: { course_id: string; course_name: string; points: number }[];
+}
+
+const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
+  const [{ data: events, error: eErr }, { data: courses, error: cErr }, { data: scores, error: sErr }] = await Promise.all([
+    supabase.from("events").select("id, name").order("name"),
+    supabase.from("courses").select("id, name"),
+    supabase.from("scores").select("event_id, course_id, points, updated_at"),
+  ]);
+  if (eErr) throw eErr;
+  if (cErr) throw cErr;
+  if (sErr) throw sErr;
+
+  const courseMap = new Map((courses ?? []).map((c) => [c.id, c.name]));
+
+  return (events ?? []).map((ev) => {
+    const evScores = (scores ?? []).filter((s) => s.event_id === ev.id);
+    const totals = new Map<string, number>();
+    let lastUpdated: string | null = null;
+    evScores.forEach((s) => {
+      totals.set(s.course_id, (totals.get(s.course_id) ?? 0) + (s.points ?? 0));
+      if (!lastUpdated || (s.updated_at && s.updated_at > lastUpdated)) {
+        lastUpdated = s.updated_at;
+      }
+    });
+    const rows = Array.from(totals.entries())
+      .map(([course_id, points]) => ({
+        course_id,
+        course_name: courseMap.get(course_id) ?? "Unknown",
+        points,
+      }))
+      .sort((a, b) => b.points - a.points);
+    return { event_id: ev.id, event_name: ev.name, last_updated: lastUpdated, rows };
+  });
+};
 
 const fetchRankings = async (): Promise<RankingRow[]> => {
   const [{ data: courses, error: cErr }, { data: scores, error: sErr }] = await Promise.all([
