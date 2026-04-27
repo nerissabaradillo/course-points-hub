@@ -177,7 +177,7 @@ export default function Dashboard() {
                 North Eastern Mindanao State University - Lianga Campus
               </h2>
                <p className="text-sm sm:text-lg text-primary-foreground/90 font-semibold leading-snug">
-                Lianga, Surigao del Sur
+                Poblacion, Lianga, Surigao del Sur 8307
               </p>
               <p className="text-sm sm:text-lg text-primary-foreground/90 font-semibold leading-snug">
                 College of Information Technology
