@@ -3,8 +3,6 @@ import { Trophy, LayoutDashboard, GraduationCap, Medal, Plus, LogIn, LogOut, Shi
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import nemsuLogo from "@/assets/nemsu-logo.png";
-import citeLogo from "@/assets/cite-logo.png";
 
 const adminNavItems = [
   { to: "/admin/courses", label: "Courses", icon: GraduationCap },
