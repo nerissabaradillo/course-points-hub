@@ -3,6 +3,8 @@ import { Trophy, LayoutDashboard, GraduationCap, Medal, Plus, LogIn, LogOut, Shi
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import nemsuLogo from "@/assets/nemsu-logo.png";
+import citeLogo from "@/assets/cite-logo.png";
 
 const adminNavItems = [
   { to: "/admin/courses", label: "Courses", icon: GraduationCap },
@@ -21,6 +23,21 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      <div className="border-b border-border bg-gradient-to-r from-primary/5 via-background to-primary/5">
+        <div className="container flex items-center justify-center gap-3 sm:gap-4 py-3 text-center">
+          <img src={nemsuLogo} alt="North Eastern Mindanao State University" className="h-12 w-12 sm:h-14 sm:w-14 object-contain shrink-0" />
+          <div className="flex flex-col">
+            <h1 className="text-sm sm:text-base font-bold leading-tight tracking-wide">
+              North Eastern Mindanao State University
+            </h1>
+            <p className="text-xs sm:text-sm text-muted-foreground font-medium">
+              Department of Computer Studies
+            </p>
+          </div>
+          <img src={citeLogo} alt="College of Information Technology Education" className="h-12 w-12 sm:h-14 sm:w-14 object-contain shrink-0" />
+        </div>
+      </div>
+
       <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-lg">
         <div className="container flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2 font-bold text-lg">
