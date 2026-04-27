@@ -19,20 +19,28 @@ interface EventLeaderboard {
   event_id: string;
   event_name: string;
   last_updated: string | null;
-  rows: { course_id: string; course_name: string; points: number }[];
+  rows: {
+    course_id: string;
+    course_name: string;
+    course_image: string | null;
+    course_color: string | null;
+    points: number;
+  }[];
 }
 
 const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
   const [{ data: events, error: eErr }, { data: courses, error: cErr }, { data: scores, error: sErr }] = await Promise.all([
     supabase.from("events").select("id, name").order("name"),
-    supabase.from("courses").select("id, name"),
+    supabase.from("courses").select("id, name, image_url, color"),
     supabase.from("scores").select("event_id, course_id, points, updated_at"),
   ]);
   if (eErr) throw eErr;
   if (cErr) throw cErr;
   if (sErr) throw sErr;
 
-  const courseMap = new Map((courses ?? []).map((c) => [c.id, c.name]));
+  const courseMap = new Map(
+    (courses ?? []).map((c) => [c.id, { name: c.name, image: c.image_url, color: c.color }])
+  );
 
   return (events ?? [])
     .map((ev) => {
@@ -46,11 +54,16 @@ const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
         }
       });
       const rows = Array.from(totals.entries())
-        .map(([course_id, points]) => ({
-          course_id,
-          course_name: courseMap.get(course_id) ?? "Unknown",
-          points,
-        }))
+        .map(([course_id, points]) => {
+          const c = courseMap.get(course_id);
+          return {
+            course_id,
+            course_name: c?.name ?? "Unknown",
+            course_image: c?.image ?? null,
+            course_color: c?.color ?? null,
+            points,
+          };
+        })
         .sort((a, b) => b.points - a.points);
       return { event_id: ev.id, event_name: ev.name, last_updated: lastUpdated, rows };
     })
