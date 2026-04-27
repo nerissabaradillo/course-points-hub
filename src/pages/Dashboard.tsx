@@ -163,8 +163,8 @@ export default function Dashboard() {
     <div className="space-y-8">
       {/* Hero */}
       <section
-        className="relative overflow-hidden rounded-2xl p-8 sm:p-12 text-primary-foreground shadow-elegant bg-cover bg-center"
-        style={{ backgroundImage: `url(${pakusganayBanner})` }}
+        className="relative overflow-hidden rounded-2xl p-8 sm:p-12 text-primary-foreground shadow-elegant bg-cover"
+        style={{ backgroundImage: `url(${pakusganayBanner})`, backgroundPosition: "center 30%" }}
       >
         <div className="absolute inset-0 bg-black/55" />
         <div className="relative">
