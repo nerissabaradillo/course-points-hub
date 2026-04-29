@@ -105,7 +105,7 @@ export default function AdminScores() {
 
   const createMut = useMutation({
     mutationFn: async () => {
-      const pts = parseInt(points, 10);
+      const pts = parseFloat(points);
       if (!courseId || !eventId || isNaN(pts)) throw new Error("All fields are required");
       // Prevent duplicate score for the same course in this event
       const { data: existing, error: checkErr } = await supabase
@@ -288,6 +288,7 @@ export default function AdminScores() {
 
                   <Input
                     type="number"
+                    step="any"
                     value={points}
                     onChange={(e) => setPoints(e.target.value)}
                     placeholder="Points"
@@ -350,6 +351,7 @@ export default function AdminScores() {
                           {editingId === s.id ? (
                             <Input
                               type="number"
+                              step="any"
                               value={editPoints}
                               onChange={(e) => setEditPoints(e.target.value)}
                               className="w-24 ml-auto"
@@ -365,7 +367,7 @@ export default function AdminScores() {
                               <Button
                                 size="sm"
                                 onClick={() => {
-                                  const pts = parseInt(editPoints, 10);
+                                  const pts = parseFloat(editPoints);
                                   if (isNaN(pts)) return toast.error("Enter a number");
                                   updateMut.mutate({ id: s.id, pts });
                                 }}
