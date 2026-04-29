@@ -1,0 +1,1 @@
+ALTER TABLE public.scores ALTER COLUMN points TYPE numeric USING points::numeric;
