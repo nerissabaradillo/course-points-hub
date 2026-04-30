@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Crown } from "lucide-react";
+
 import nemsuLogo from "@/assets/nemsu-logo.png";
 import pakusganayBanner from "@/assets/pakusganay-2026-banner.png";
 import championBanner from "@/assets/champion-banner.png";
@@ -235,25 +235,6 @@ export default function Dashboard() {
       {/* Champion Banner Card */}
       <section className="flex justify-center">
         <div className="relative w-full max-w-md champion-glow rounded-2xl">
-          {/* Sparkles */}
-          <Sparkles className="champion-sparkle absolute -top-4 -left-4 h-8 w-8 text-accent drop-shadow-[0_0_8px_hsl(var(--accent))] z-20" />
-          <Sparkles
-            className="champion-sparkle absolute -top-2 -right-6 h-6 w-6 text-accent drop-shadow-[0_0_8px_hsl(var(--accent))] z-20"
-            style={{ animationDelay: "0.6s" }}
-          />
-          <Sparkles
-            className="champion-sparkle absolute -bottom-3 -left-3 h-7 w-7 text-accent drop-shadow-[0_0_8px_hsl(var(--accent))] z-20"
-            style={{ animationDelay: "1.2s" }}
-          />
-          <Sparkles
-            className="champion-sparkle absolute -bottom-5 -right-2 h-9 w-9 text-accent drop-shadow-[0_0_8px_hsl(var(--accent))] z-20"
-            style={{ animationDelay: "1.8s" }}
-          />
-          <Crown
-            className="champion-sparkle absolute -top-8 left-1/2 -translate-x-1/2 h-10 w-10 text-accent drop-shadow-[0_0_10px_hsl(var(--accent))] z-20"
-            style={{ animationDelay: "0.3s" }}
-          />
-
           <div className="champion-float relative overflow-hidden rounded-2xl ring-2 ring-accent/60 shadow-elegant">
             <img
               src={championBanner}
