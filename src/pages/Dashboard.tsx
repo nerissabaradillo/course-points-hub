@@ -439,7 +439,7 @@ export default function Dashboard() {
                       {(eventBoards ?? []).map((ev) => (
                         <th
                           key={ev.event_id}
-                          className="px-3 py-3 text-right font-semibold whitespace-nowrap text-muted-foreground"
+                          className="px-3 py-3 text-center font-semibold whitespace-nowrap text-muted-foreground"
                         >
                           {ev.event_name}
                         </th>
@@ -479,7 +479,7 @@ export default function Dashboard() {
                           return (
                             <td
                               key={ev.event_id}
-                              className={`px-3 py-3 text-right tabular-nums whitespace-nowrap ${
+                              className={`px-3 py-3 text-center tabular-nums whitespace-nowrap ${
                                 pts === 0 ? "text-muted-foreground/60" : "text-foreground"
                               } ${isTop ? "font-bold text-primary" : ""}`}
                             >
