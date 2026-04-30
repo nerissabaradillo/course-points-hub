@@ -395,7 +395,9 @@ export default function AdminScores() {
                     <TableRow>
                       <TableHead className="w-[60px]">#</TableHead>
                       <TableHead>Course</TableHead>
-                      <TableHead className="text-right">Points</TableHead>
+                      {isCodm && <TableHead className="text-right w-[80px]">MP</TableHead>}
+                      {isCodm && <TableHead className="text-right w-[80px]">BR</TableHead>}
+                      <TableHead className="text-right">{isCodm ? "Total" : "Points"}</TableHead>
                       <TableHead className="w-[140px] text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -414,8 +416,38 @@ export default function AdminScores() {
                             {s.courses?.name ?? "—"}
                           </span>
                         </TableCell>
+                        {isCodm && (
+                          <TableCell className="text-right tabular-nums">
+                            {editingId === s.id ? (
+                              <Input
+                                type="number"
+                                step="any"
+                                value={editMp}
+                                onChange={(e) => setEditMp(e.target.value)}
+                                className="w-20 ml-auto"
+                              />
+                            ) : (
+                              s.mp_points ?? "—"
+                            )}
+                          </TableCell>
+                        )}
+                        {isCodm && (
+                          <TableCell className="text-right tabular-nums">
+                            {editingId === s.id ? (
+                              <Input
+                                type="number"
+                                step="any"
+                                value={editBr}
+                                onChange={(e) => setEditBr(e.target.value)}
+                                className="w-20 ml-auto"
+                              />
+                            ) : (
+                              s.br_points ?? "—"
+                            )}
+                          </TableCell>
+                        )}
                         <TableCell className="text-right">
-                          {editingId === s.id ? (
+                          {editingId === s.id && !isCodm ? (
                             <Input
                               type="number"
                               step="any"
@@ -425,7 +457,11 @@ export default function AdminScores() {
                               autoFocus
                             />
                           ) : (
-                            <span className="font-bold text-primary tabular-nums">{s.points}</span>
+                            <span className="font-bold text-primary tabular-nums">
+                              {editingId === s.id && isCodm
+                                ? (parseFloat(editMp) || 0) + (parseFloat(editBr) || 0)
+                                : s.points}
+                            </span>
                           )}
                         </TableCell>
                         <TableCell className="text-right">
@@ -434,9 +470,17 @@ export default function AdminScores() {
                               <Button
                                 size="sm"
                                 onClick={() => {
-                                  const pts = parseFloat(editPoints);
-                                  if (isNaN(pts)) return toast.error("Enter a number");
-                                  updateMut.mutate({ id: s.id, pts });
+                                  if (isCodm) {
+                                    const mp = parseFloat(editMp);
+                                    const br = parseFloat(editBr);
+                                    if (isNaN(mp) || isNaN(br))
+                                      return toast.error("Enter MP and BR");
+                                    updateMut.mutate({ id: s.id, pts: mp + br, mp, br });
+                                  } else {
+                                    const pts = parseFloat(editPoints);
+                                    if (isNaN(pts)) return toast.error("Enter a number");
+                                    updateMut.mutate({ id: s.id, pts });
+                                  }
                                 }}
                               >
                                 Save
@@ -457,6 +501,8 @@ export default function AdminScores() {
                                 onClick={() => {
                                   setEditingId(s.id);
                                   setEditPoints(String(s.points));
+                                  setEditMp(s.mp_points != null ? String(s.mp_points) : "");
+                                  setEditBr(s.br_points != null ? String(s.br_points) : "");
                                 }}
                               >
                                 <Pencil className="h-4 w-4" />
