@@ -368,36 +368,39 @@ export default function Dashboard() {
               <EmptyState message="No courses yet." />
             ) : (
               <ol className="space-y-2">
-                {rankings.map((r, i) => (
-                  <li
-                    key={r.course_id}
-                    className="flex items-center justify-between rounded-lg border border-border bg-background/50 px-4 py-3 transition-smooth hover:bg-secondary"
-                    style={r.course_color ? { borderLeft: `4px solid ${r.course_color}` } : undefined}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span
-                        className={`grid h-8 w-8 place-items-center rounded-full text-sm font-bold shrink-0 ${
-                          i === 0
-                            ? "bg-gradient-gold text-accent-foreground"
-                            : i === 1
-                            ? "bg-silver text-foreground"
-                            : i === 2
-                            ? "bg-bronze text-primary-foreground"
-                            : "bg-secondary text-foreground"
-                        }`}
-                      >
-                        {i + 1}
-                      </span>
-                      <CourseAvatar
-                        name={r.course_name}
-                        image={r.course_image}
-                        color={r.course_color}
-                      />
-                      <span className="font-medium truncate">{r.course_name}</span>
-                    </div>
-                    <span className="font-bold text-primary shrink-0">{r.total_points} pts</span>
-                  </li>
-                ))}
+                {rankings.map((r, i) => {
+                  const rank = overallRanks[i] ?? i + 1;
+                  return (
+                    <li
+                      key={r.course_id}
+                      className="flex items-center justify-between rounded-lg border border-border bg-background/50 px-4 py-3 transition-smooth hover:bg-secondary"
+                      style={r.course_color ? { borderLeft: `4px solid ${r.course_color}` } : undefined}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span
+                          className={`grid h-8 w-8 place-items-center rounded-full text-sm font-bold shrink-0 ${
+                            rank === 1
+                              ? "bg-gradient-gold text-accent-foreground"
+                              : rank === 2
+                              ? "bg-silver text-foreground"
+                              : rank === 3
+                              ? "bg-bronze text-primary-foreground"
+                              : "bg-secondary text-foreground"
+                          }`}
+                        >
+                          {rank}
+                        </span>
+                        <CourseAvatar
+                          name={r.course_name}
+                          image={r.course_image}
+                          color={r.course_color}
+                        />
+                        <span className="font-medium truncate">{r.course_name}</span>
+                      </div>
+                      <span className="font-bold text-primary shrink-0">{r.total_points} pts</span>
+                    </li>
+                  );
+                })}
               </ol>
             )}
           </CardContent>
