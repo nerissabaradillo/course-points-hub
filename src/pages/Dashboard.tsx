@@ -667,3 +667,107 @@ function EmptyState({ message }: { message: string }) {
     </div>
   );
 }
+
+type ChampionTier = "gold" | "silver" | "bronze";
+
+const TIERS: { id: ChampionTier; label: string; hsl: string; ringHsl: string }[] = [
+  { id: "gold", label: "Gold", hsl: "43 96% 56%", ringHsl: "43 96% 56%" },
+  { id: "silver", label: "Silver", hsl: "220 9% 75%", ringHsl: "220 9% 65%" },
+  { id: "bronze", label: "Bronze", hsl: "25 75% 50%", ringHsl: "25 75% 50%" },
+];
+
+function ChampionBanner() {
+  const [tier, setTier] = useState<ChampionTier>("gold");
+  const active = TIERS.find((t) => t.id === tier)!;
+
+  const styleVars = {
+    "--champ-accent": active.hsl,
+    "--champ-ring": active.ringHsl,
+  } as React.CSSProperties;
+
+  return (
+    <section className="flex flex-col items-center gap-4">
+      {/* Tier switcher */}
+      <div
+        className="inline-flex items-center gap-1 rounded-full border border-border bg-card p-1 shadow-card"
+        role="group"
+        aria-label="Champion accent color"
+      >
+        {TIERS.map((t) => {
+          const selected = t.id === tier;
+          return (
+            <button
+              key={t.id}
+              type="button"
+              onClick={() => setTier(t.id)}
+              aria-pressed={selected}
+              className={`flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-semibold transition-smooth ${
+                selected ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+              style={
+                selected
+                  ? { background: `hsl(${t.hsl} / 0.18)`, boxShadow: `inset 0 0 0 1px hsl(${t.hsl} / 0.5)` }
+                  : undefined
+              }
+            >
+              <span
+                className="h-3 w-3 rounded-full"
+                style={{ background: `hsl(${t.hsl})`, boxShadow: `0 0 8px hsl(${t.hsl} / 0.6)` }}
+              />
+              {t.label}
+            </button>
+          );
+        })}
+      </div>
+
+      <div
+        className="relative w-full max-w-md rounded-2xl"
+        style={{
+          ...styleVars,
+          boxShadow: `0 0 30px hsl(var(--champ-accent) / 0.45), 0 0 60px hsl(var(--champ-accent) / 0.25)`,
+        }}
+      >
+        <Sparkles
+          className="champion-sparkle absolute -top-4 -left-4 h-8 w-8 z-20"
+          style={{ color: `hsl(var(--champ-accent))`, filter: `drop-shadow(0 0 8px hsl(var(--champ-accent)))` }}
+        />
+        <Sparkles
+          className="champion-sparkle absolute -top-2 -right-6 h-6 w-6 z-20"
+          style={{ color: `hsl(var(--champ-accent))`, filter: `drop-shadow(0 0 8px hsl(var(--champ-accent)))`, animationDelay: "0.6s" }}
+        />
+        <Sparkles
+          className="champion-sparkle absolute -bottom-3 -left-3 h-7 w-7 z-20"
+          style={{ color: `hsl(var(--champ-accent))`, filter: `drop-shadow(0 0 8px hsl(var(--champ-accent)))`, animationDelay: "1.2s" }}
+        />
+        <Sparkles
+          className="champion-sparkle absolute -bottom-5 -right-2 h-9 w-9 z-20"
+          style={{ color: `hsl(var(--champ-accent))`, filter: `drop-shadow(0 0 8px hsl(var(--champ-accent)))`, animationDelay: "1.8s" }}
+        />
+        <Crown
+          className="champion-sparkle absolute -top-8 left-1/2 -translate-x-1/2 h-10 w-10 z-20"
+          style={{ color: `hsl(var(--champ-accent))`, filter: `drop-shadow(0 0 10px hsl(var(--champ-accent)))`, animationDelay: "0.3s" }}
+        />
+
+        <div
+          className="champion-float relative overflow-hidden rounded-2xl"
+          style={{ boxShadow: `0 0 0 2px hsl(var(--champ-ring) / 0.6), 0 10px 30px -10px hsl(var(--champ-accent) / 0.5)` }}
+        >
+          <img
+            src={championBanner}
+            alt="Pakusganay 2026 Overall Champion — House Baratheon (BSBA - FM)"
+            className="w-full h-auto block"
+          />
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: `linear-gradient(110deg, transparent 30%, hsl(var(--champ-accent) / 0.45) 45%, hsl(var(--champ-accent) / 0.7) 50%, hsl(var(--champ-accent) / 0.45) 55%, transparent 70%)`,
+              backgroundSize: "250% 100%",
+              animation: "champion-shimmer 3.5s linear infinite",
+              mixBlendMode: "overlay",
+            }}
+          />
+        </div>
+      </div>
+    </section>
+  );
+}
