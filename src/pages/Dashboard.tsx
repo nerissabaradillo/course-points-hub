@@ -459,7 +459,7 @@ export default function Dashboard() {
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">
-                              {i + 1}
+                              {overallRanks[i] ?? i + 1}
                             </span>
                             <CourseAvatar
                               name={r.course_name}
