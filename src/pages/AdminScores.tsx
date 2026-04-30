@@ -45,18 +45,27 @@ import { toast } from "sonner";
 interface ScoreRow {
   id: string;
   points: number;
+  mp_points: number | null;
+  br_points: number | null;
   course_id: string;
   event_id: string;
   courses: { name: string; color: string | null } | null;
 }
+
+const isCodmEvent = (name?: string | null) =>
+  !!name && /codm/i.test(name);
 
 export default function AdminScores() {
   const qc = useQueryClient();
   const [eventId, setEventId] = useState<string>("");
   const [courseId, setCourseId] = useState("");
   const [points, setPoints] = useState("");
+  const [mpPoints, setMpPoints] = useState("");
+  const [brPoints, setBrPoints] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPoints, setEditPoints] = useState("");
+  const [editMp, setEditMp] = useState("");
+  const [editBr, setEditBr] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [eventPickerOpen, setEventPickerOpen] = useState(false);
 
@@ -91,7 +100,7 @@ export default function AdminScores() {
     queryFn: async (): Promise<ScoreRow[]> => {
       const { data, error } = await supabase
         .from("scores")
-        .select("id, points, course_id, event_id, courses(name, color)")
+        .select("id, points, mp_points, br_points, course_id, event_id, courses(name, color)")
         .order("points", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as ScoreRow[];
@@ -101,13 +110,29 @@ export default function AdminScores() {
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["scores-with-relations"] });
     qc.invalidateQueries({ queryKey: ["rankings"] });
+    qc.invalidateQueries({ queryKey: ["event-leaderboards"] });
   };
+
+  const isCodm = isCodmEvent(events?.find((e) => e.id === eventId)?.name);
 
   const createMut = useMutation({
     mutationFn: async () => {
-      const pts = parseFloat(points);
-      if (!courseId || !eventId || isNaN(pts)) throw new Error("All fields are required");
-      // Prevent duplicate score for the same course in this event
+      if (!courseId || !eventId) throw new Error("All fields are required");
+
+      let pts: number;
+      let mp: number | null = null;
+      let br: number | null = null;
+
+      if (isCodm) {
+        mp = parseFloat(mpPoints);
+        br = parseFloat(brPoints);
+        if (isNaN(mp) || isNaN(br)) throw new Error("Enter both MP and BR points");
+        pts = mp + br;
+      } else {
+        pts = parseFloat(points);
+        if (isNaN(pts)) throw new Error("Enter points");
+      }
+
       const { data: existing, error: checkErr } = await supabase
         .from("scores")
         .select("id")
@@ -122,12 +147,16 @@ export default function AdminScores() {
         course_id: courseId,
         event_id: eventId,
         points: pts,
+        mp_points: mp,
+        br_points: br,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Score added");
       setPoints("");
+      setMpPoints("");
+      setBrPoints("");
       setCourseId("");
       invalidate();
     },
@@ -135,8 +164,11 @@ export default function AdminScores() {
   });
 
   const updateMut = useMutation({
-    mutationFn: async ({ id, pts }: { id: string; pts: number }) => {
-      const { error } = await supabase.from("scores").update({ points: pts }).eq("id", id);
+    mutationFn: async (args: { id: string; pts: number; mp?: number | null; br?: number | null }) => {
+      const payload: { points: number; mp_points?: number | null; br_points?: number | null } = { points: args.pts };
+      if (args.mp !== undefined) payload.mp_points = args.mp;
+      if (args.br !== undefined) payload.br_points = args.br;
+      const { error } = await supabase.from("scores").update(payload).eq("id", args.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -278,7 +310,12 @@ export default function AdminScores() {
                 </p>
               ) : (
                 <form
-                  className="grid gap-3 sm:grid-cols-[1fr_140px_auto]"
+                  className={cn(
+                    "grid gap-3",
+                    isCodm
+                      ? "sm:grid-cols-[1fr_110px_110px_auto]"
+                      : "sm:grid-cols-[1fr_140px_auto]",
+                  )}
                   onSubmit={(e) => {
                     e.preventDefault();
                     createMut.mutate();
@@ -297,13 +334,32 @@ export default function AdminScores() {
                     </SelectContent>
                   </Select>
 
-                  <Input
-                    type="number"
-                    step="any"
-                    value={points}
-                    onChange={(e) => setPoints(e.target.value)}
-                    placeholder="Points"
-                  />
+                  {isCodm ? (
+                    <>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={mpPoints}
+                        onChange={(e) => setMpPoints(e.target.value)}
+                        placeholder="MP points"
+                      />
+                      <Input
+                        type="number"
+                        step="any"
+                        value={brPoints}
+                        onChange={(e) => setBrPoints(e.target.value)}
+                        placeholder="BR points"
+                      />
+                    </>
+                  ) : (
+                    <Input
+                      type="number"
+                      step="any"
+                      value={points}
+                      onChange={(e) => setPoints(e.target.value)}
+                      placeholder="Points"
+                    />
+                  )}
 
                   <Button type="submit" disabled={createMut.isPending}>
                     {createMut.isPending ? (
@@ -339,7 +395,9 @@ export default function AdminScores() {
                     <TableRow>
                       <TableHead className="w-[60px]">#</TableHead>
                       <TableHead>Course</TableHead>
-                      <TableHead className="text-right">Points</TableHead>
+                      {isCodm && <TableHead className="text-right w-[80px]">MP</TableHead>}
+                      {isCodm && <TableHead className="text-right w-[80px]">BR</TableHead>}
+                      <TableHead className="text-right">{isCodm ? "Total" : "Points"}</TableHead>
                       <TableHead className="w-[140px] text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -358,8 +416,38 @@ export default function AdminScores() {
                             {s.courses?.name ?? "—"}
                           </span>
                         </TableCell>
+                        {isCodm && (
+                          <TableCell className="text-right tabular-nums">
+                            {editingId === s.id ? (
+                              <Input
+                                type="number"
+                                step="any"
+                                value={editMp}
+                                onChange={(e) => setEditMp(e.target.value)}
+                                className="w-20 ml-auto"
+                              />
+                            ) : (
+                              s.mp_points ?? "—"
+                            )}
+                          </TableCell>
+                        )}
+                        {isCodm && (
+                          <TableCell className="text-right tabular-nums">
+                            {editingId === s.id ? (
+                              <Input
+                                type="number"
+                                step="any"
+                                value={editBr}
+                                onChange={(e) => setEditBr(e.target.value)}
+                                className="w-20 ml-auto"
+                              />
+                            ) : (
+                              s.br_points ?? "—"
+                            )}
+                          </TableCell>
+                        )}
                         <TableCell className="text-right">
-                          {editingId === s.id ? (
+                          {editingId === s.id && !isCodm ? (
                             <Input
                               type="number"
                               step="any"
@@ -369,7 +457,11 @@ export default function AdminScores() {
                               autoFocus
                             />
                           ) : (
-                            <span className="font-bold text-primary tabular-nums">{s.points}</span>
+                            <span className="font-bold text-primary tabular-nums">
+                              {editingId === s.id && isCodm
+                                ? (parseFloat(editMp) || 0) + (parseFloat(editBr) || 0)
+                                : s.points}
+                            </span>
                           )}
                         </TableCell>
                         <TableCell className="text-right">
@@ -378,9 +470,17 @@ export default function AdminScores() {
                               <Button
                                 size="sm"
                                 onClick={() => {
-                                  const pts = parseFloat(editPoints);
-                                  if (isNaN(pts)) return toast.error("Enter a number");
-                                  updateMut.mutate({ id: s.id, pts });
+                                  if (isCodm) {
+                                    const mp = parseFloat(editMp);
+                                    const br = parseFloat(editBr);
+                                    if (isNaN(mp) || isNaN(br))
+                                      return toast.error("Enter MP and BR");
+                                    updateMut.mutate({ id: s.id, pts: mp + br, mp, br });
+                                  } else {
+                                    const pts = parseFloat(editPoints);
+                                    if (isNaN(pts)) return toast.error("Enter a number");
+                                    updateMut.mutate({ id: s.id, pts });
+                                  }
                                 }}
                               >
                                 Save
@@ -401,6 +501,8 @@ export default function AdminScores() {
                                 onClick={() => {
                                   setEditingId(s.id);
                                   setEditPoints(String(s.points));
+                                  setEditMp(s.mp_points != null ? String(s.mp_points) : "");
+                                  setEditBr(s.br_points != null ? String(s.br_points) : "");
                                 }}
                               >
                                 <Pencil className="h-4 w-4" />
