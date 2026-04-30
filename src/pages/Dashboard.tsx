@@ -470,11 +470,12 @@ export default function Dashboard() {
                             <span className="font-medium truncate">{r.course_name}</span>
                           </div>
                         </td>
-                        {(eventBoards ?? []).map((ev) => {
-                          const found = ev.rows.find((x) => x.course_id === r.course_id);
+                        {(eventBoards ?? []).map((ev, evIdx) => {
+                          const foundIdx = ev.rows.findIndex((x) => x.course_id === r.course_id);
+                          const found = foundIdx >= 0 ? ev.rows[foundIdx] : null;
                           const pts = found?.points ?? 0;
-                          const isTop =
-                            ev.rows.length > 0 && ev.rows[0].course_id === r.course_id && pts > 0;
+                          const rank = foundIdx >= 0 ? eventRanks[evIdx]?.[foundIdx] : undefined;
+                          const isTop = rank === 1 && pts > 0;
                           return (
                             <td
                               key={ev.event_id}
