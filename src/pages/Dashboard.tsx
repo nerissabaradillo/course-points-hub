@@ -447,13 +447,37 @@ export default function Dashboard() {
                       {(eventBoards ?? []).map((ev) => (
                         <th
                           key={ev.event_id}
-                          className="px-3 py-3 text-center font-semibold whitespace-nowrap text-muted-foreground"
+                          colSpan={ev.is_codm ? 3 : 1}
+                          className="px-3 py-3 text-center font-semibold whitespace-nowrap text-muted-foreground border-l border-border/60"
                         >
                           {ev.event_name}
                         </th>
                       ))}
-                      <th className="px-4 py-3 text-right font-semibold">Total</th>
+                      <th className="px-4 py-3 text-right font-semibold border-l border-border/60">Total</th>
                     </tr>
+                    {(eventBoards ?? []).some((ev) => ev.is_codm) && (
+                      <tr className="border-b border-border bg-muted/20">
+                        <th className="sticky left-0 z-10 bg-muted/20 px-4 py-1" />
+                        {(eventBoards ?? []).map((ev) =>
+                          ev.is_codm ? (
+                            <Fragment key={ev.event_id}>
+                              <th className="px-2 py-1 text-center text-[10px] uppercase tracking-wide text-muted-foreground border-l border-border/60">
+                                MP
+                              </th>
+                              <th className="px-2 py-1 text-center text-[10px] uppercase tracking-wide text-muted-foreground">
+                                BR
+                              </th>
+                              <th className="px-2 py-1 text-center text-[10px] uppercase tracking-wide text-muted-foreground">
+                                Total
+                              </th>
+                            </Fragment>
+                          ) : (
+                            <th key={ev.event_id} className="px-2 py-1 border-l border-border/60" />
+                          ),
+                        )}
+                        <th className="px-4 py-1 border-l border-border/60" />
+                      </tr>
+                    )}
                   </thead>
                   <tbody>
                     {rankings.map((r, i) => (
@@ -484,18 +508,30 @@ export default function Dashboard() {
                           const pts = found?.points ?? 0;
                           const rank = foundIdx >= 0 ? eventRanks[evIdx]?.[foundIdx] : undefined;
                           const isTop = rank === 1 && pts > 0;
+                          const totalCls = `px-3 py-3 text-center tabular-nums whitespace-nowrap border-l border-border/60 ${
+                            pts === 0 ? "text-muted-foreground/60" : "text-foreground"
+                          } ${isTop ? "font-bold text-primary" : ""}`;
+                          if (ev.is_codm) {
+                            const mp = found?.mp_points;
+                            const br = found?.br_points;
+                            const subCls = "px-2 py-3 text-center tabular-nums whitespace-nowrap text-xs text-muted-foreground";
+                            return (
+                              <Fragment key={ev.event_id}>
+                                <td className={`${subCls} border-l border-border/60`}>
+                                  {mp != null ? mp : "—"}
+                                </td>
+                                <td className={subCls}>{br != null ? br : "—"}</td>
+                                <td className={totalCls}>{pts}</td>
+                              </Fragment>
+                            );
+                          }
                           return (
-                            <td
-                              key={ev.event_id}
-                              className={`px-3 py-3 text-center tabular-nums whitespace-nowrap ${
-                                pts === 0 ? "text-muted-foreground/60" : "text-foreground"
-                              } ${isTop ? "font-bold text-primary" : ""}`}
-                            >
+                            <td key={ev.event_id} className={totalCls}>
                               {pts}
                             </td>
                           );
                         })}
-                        <td className="px-4 py-3 text-right font-bold text-primary tabular-nums whitespace-nowrap">
+                        <td className="px-4 py-3 text-right font-bold text-primary tabular-nums whitespace-nowrap border-l border-border/60">
                           {r.total_points}
                         </td>
                       </tr>
