@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { Sparkles, Crown } from "lucide-react";
+
 import nemsuLogo from "@/assets/nemsu-logo.png";
 import pakusganayBanner from "@/assets/pakusganay-2026-banner.png";
 import championBanner from "@/assets/champion-banner.png";
