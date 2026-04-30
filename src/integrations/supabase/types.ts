@@ -58,32 +58,26 @@ export type Database = {
       }
       scores: {
         Row: {
-          br_points: number | null
           course_id: string
           created_at: string
           event_id: string
           id: string
-          mp_points: number | null
           points: number
           updated_at: string
         }
         Insert: {
-          br_points?: number | null
           course_id: string
           created_at?: string
           event_id: string
           id?: string
-          mp_points?: number | null
           points?: number
           updated_at?: string
         }
         Update: {
-          br_points?: number | null
           course_id?: string
           created_at?: string
           event_id?: string
           id?: string
-          mp_points?: number | null
           points?: number
           updated_at?: string
         }
