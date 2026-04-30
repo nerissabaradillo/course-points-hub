@@ -620,7 +620,14 @@ export default function Dashboard() {
                               />
                               <span className="text-sm font-medium truncate">{r.course_name}</span>
                             </div>
-                            <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
+                            <div className="flex flex-col items-end shrink-0">
+                              <span className="text-sm font-bold text-primary">{r.points} pts</span>
+                              {ev.is_codm && (r.mp_points != null || r.br_points != null) && (
+                                <span className="text-[10px] text-muted-foreground tabular-nums">
+                                  MP {r.mp_points ?? 0} · BR {r.br_points ?? 0}
+                                </span>
+                              )}
+                            </div>
                           </li>
                         );
                       })}
