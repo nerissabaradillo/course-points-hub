@@ -45,18 +45,27 @@ import { toast } from "sonner";
 interface ScoreRow {
   id: string;
   points: number;
+  mp_points: number | null;
+  br_points: number | null;
   course_id: string;
   event_id: string;
   courses: { name: string; color: string | null } | null;
 }
+
+const isCodmEvent = (name?: string | null) =>
+  !!name && /codm/i.test(name);
 
 export default function AdminScores() {
   const qc = useQueryClient();
   const [eventId, setEventId] = useState<string>("");
   const [courseId, setCourseId] = useState("");
   const [points, setPoints] = useState("");
+  const [mpPoints, setMpPoints] = useState("");
+  const [brPoints, setBrPoints] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editPoints, setEditPoints] = useState("");
+  const [editMp, setEditMp] = useState("");
+  const [editBr, setEditBr] = useState("");
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [eventPickerOpen, setEventPickerOpen] = useState(false);
 
