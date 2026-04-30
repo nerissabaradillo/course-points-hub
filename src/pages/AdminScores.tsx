@@ -163,11 +163,22 @@ export default function AdminScores() {
   const noCoursesOrEvents = !courses?.length || !events?.length;
   const selectedEvent = events?.find((e) => e.id === eventId);
 
-  // Filter scores to selected event only, sorted by points desc
+  // Filter scores to selected event only, sorted by points desc, with dense ranks (ties share rank)
   const eventScores = useMemo(
     () => (scores ?? []).filter((s) => s.event_id === eventId),
     [scores, eventId],
   );
+
+  const rankedEventScores = useMemo(() => {
+    let lastPts: number | null = null;
+    let lastRank = 0;
+    return eventScores.map((s, idx) => {
+      const rank = lastPts !== null && s.points === lastPts ? lastRank : idx + 1;
+      lastPts = s.points;
+      lastRank = rank;
+      return { ...s, rank };
+    });
+  }, [eventScores]);
 
   // Courses already scored in this event — hidden from the add-form picker
   const scoredCourseIds = useMemo(
@@ -333,10 +344,10 @@ export default function AdminScores() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {eventScores.map((s, idx) => (
+                    {rankedEventScores.map((s) => (
                       <TableRow key={s.id}>
                         <TableCell className="text-muted-foreground tabular-nums">
-                          {idx + 1}
+                          {s.rank}
                         </TableCell>
                         <TableCell className="font-medium">
                           <span className="inline-flex items-center gap-2">

@@ -105,6 +105,25 @@ const podiumStyles = [
 
 const barColors = ["hsl(var(--gold))", "hsl(var(--silver))", "hsl(var(--bronze))"];
 
+// Dense ranking: items with equal value share the same rank (1, 2, 2, 3)
+function computeRanks<T>(items: T[], getValue: (item: T) => number): number[] {
+  let lastVal: number | null = null;
+  let lastRank = 0;
+  return items.map((item, idx) => {
+    const v = getValue(item);
+    const rank = lastVal !== null && v === lastVal ? lastRank : idx + 1;
+    lastVal = v;
+    lastRank = rank;
+    return rank;
+  });
+}
+
+const rankSuffix = (n: number) => {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
 export default function Dashboard() {
   useEffect(() => {
     document.title = "Intramurals Leaderboard · Dashboard";
@@ -155,6 +174,19 @@ export default function Dashboard() {
     });
     return { data, events };
   }, [rankings, eventBoards]);
+
+  // Dense ranks for overall rankings (ties share rank)
+  const overallRanks = useMemo(
+    () => (rankings ? computeRanks(rankings, (r) => r.total_points) : []),
+    [rankings],
+  );
+
+  // Dense ranks per event leaderboard
+  const eventRanks = useMemo(
+    () =>
+      (eventBoards ?? []).map((ev) => computeRanks(ev.rows, (r) => r.points)),
+    [eventBoards],
+  );
 
   // Distinct HSL colors for events (cycled around the wheel)
   const eventColor = (idx: number) => `hsl(${(idx * 47) % 360} 70% 55%)`;
@@ -210,39 +242,42 @@ export default function Dashboard() {
         <section>
           <h2 className="text-xl font-bold mb-4">Top 3</h2>
           <div className="grid gap-4 sm:grid-cols-3">
-            {rankings.slice(0, 3).map((r, i) => {
-              const s = podiumStyles[i];
-              const Icon = s.icon;
-              return (
-                <div
-                  key={r.course_id}
-                  className={`relative overflow-hidden rounded-2xl ring-2 ${s.ring} bg-card p-6 shadow-card transition-smooth hover:shadow-elegant hover:-translate-y-1`}
-                >
-                  {r.course_color && (
-                    <div
-                      className="absolute inset-x-0 top-0 h-1.5"
-                      style={{ background: r.course_color }}
-                    />
-                  )}
-                  <div className="flex items-center gap-3">
-                    <CourseAvatar
-                      name={r.course_name}
-                      image={r.course_image}
-                      color={r.course_color}
-                      size="lg"
-                    />
-                    <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${s.bg} ${s.text}`}>
-                      <Icon className="h-3.5 w-3.5" />
-                      {s.label}
+            {rankings
+              .map((r, idx) => ({ r, rank: overallRanks[idx] ?? idx + 1 }))
+              .filter(({ rank }) => rank <= 3)
+              .map(({ r, rank }) => {
+                const s = podiumStyles[rank - 1];
+                const Icon = s.icon;
+                return (
+                  <div
+                    key={r.course_id}
+                    className={`relative overflow-hidden rounded-2xl ring-2 ${s.ring} bg-card p-6 shadow-card transition-smooth hover:shadow-elegant hover:-translate-y-1`}
+                  >
+                    {r.course_color && (
+                      <div
+                        className="absolute inset-x-0 top-0 h-1.5"
+                        style={{ background: r.course_color }}
+                      />
+                    )}
+                    <div className="flex items-center gap-3">
+                      <CourseAvatar
+                        name={r.course_name}
+                        image={r.course_image}
+                        color={r.course_color}
+                        size="lg"
+                      />
+                      <div className={`inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-bold ${s.bg} ${s.text}`}>
+                        <Icon className="h-3.5 w-3.5" />
+                        {s.label}
+                      </div>
+                    </div>
+                    <div className="mt-4 text-2xl font-bold">{r.course_name}</div>
+                    <div className="mt-1 text-3xl font-extrabold text-primary">
+                      {r.total_points} <span className="text-sm font-medium text-muted-foreground">pts</span>
                     </div>
                   </div>
-                  <div className="mt-4 text-2xl font-bold">{r.course_name}</div>
-                  <div className="mt-1 text-3xl font-extrabold text-primary">
-                    {r.total_points} <span className="text-sm font-medium text-muted-foreground">pts</span>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         </section>
       )}
@@ -333,36 +368,39 @@ export default function Dashboard() {
               <EmptyState message="No courses yet." />
             ) : (
               <ol className="space-y-2">
-                {rankings.map((r, i) => (
-                  <li
-                    key={r.course_id}
-                    className="flex items-center justify-between rounded-lg border border-border bg-background/50 px-4 py-3 transition-smooth hover:bg-secondary"
-                    style={r.course_color ? { borderLeft: `4px solid ${r.course_color}` } : undefined}
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span
-                        className={`grid h-8 w-8 place-items-center rounded-full text-sm font-bold shrink-0 ${
-                          i === 0
-                            ? "bg-gradient-gold text-accent-foreground"
-                            : i === 1
-                            ? "bg-silver text-foreground"
-                            : i === 2
-                            ? "bg-bronze text-primary-foreground"
-                            : "bg-secondary text-foreground"
-                        }`}
-                      >
-                        {i + 1}
-                      </span>
-                      <CourseAvatar
-                        name={r.course_name}
-                        image={r.course_image}
-                        color={r.course_color}
-                      />
-                      <span className="font-medium truncate">{r.course_name}</span>
-                    </div>
-                    <span className="font-bold text-primary shrink-0">{r.total_points} pts</span>
-                  </li>
-                ))}
+                {rankings.map((r, i) => {
+                  const rank = overallRanks[i] ?? i + 1;
+                  return (
+                    <li
+                      key={r.course_id}
+                      className="flex items-center justify-between rounded-lg border border-border bg-background/50 px-4 py-3 transition-smooth hover:bg-secondary"
+                      style={r.course_color ? { borderLeft: `4px solid ${r.course_color}` } : undefined}
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <span
+                          className={`grid h-8 w-8 place-items-center rounded-full text-sm font-bold shrink-0 ${
+                            rank === 1
+                              ? "bg-gradient-gold text-accent-foreground"
+                              : rank === 2
+                              ? "bg-silver text-foreground"
+                              : rank === 3
+                              ? "bg-bronze text-primary-foreground"
+                              : "bg-secondary text-foreground"
+                          }`}
+                        >
+                          {rank}
+                        </span>
+                        <CourseAvatar
+                          name={r.course_name}
+                          image={r.course_image}
+                          color={r.course_color}
+                        />
+                        <span className="font-medium truncate">{r.course_name}</span>
+                      </div>
+                      <span className="font-bold text-primary shrink-0">{r.total_points} pts</span>
+                    </li>
+                  );
+                })}
               </ol>
             )}
           </CardContent>
@@ -421,7 +459,7 @@ export default function Dashboard() {
                         >
                           <div className="flex items-center gap-2 min-w-0">
                             <span className="text-xs font-bold text-muted-foreground w-5 shrink-0">
-                              {i + 1}
+                              {overallRanks[i] ?? i + 1}
                             </span>
                             <CourseAvatar
                               name={r.course_name}
@@ -432,11 +470,12 @@ export default function Dashboard() {
                             <span className="font-medium truncate">{r.course_name}</span>
                           </div>
                         </td>
-                        {(eventBoards ?? []).map((ev) => {
-                          const found = ev.rows.find((x) => x.course_id === r.course_id);
+                        {(eventBoards ?? []).map((ev, evIdx) => {
+                          const foundIdx = ev.rows.findIndex((x) => x.course_id === r.course_id);
+                          const found = foundIdx >= 0 ? ev.rows[foundIdx] : null;
                           const pts = found?.points ?? 0;
-                          const isTop =
-                            ev.rows.length > 0 && ev.rows[0].course_id === r.course_id && pts > 0;
+                          const rank = foundIdx >= 0 ? eventRanks[evIdx]?.[foundIdx] : undefined;
+                          const isTop = rank === 1 && pts > 0;
                           return (
                             <td
                               key={ev.event_id}
@@ -483,7 +522,7 @@ export default function Dashboard() {
           </Card>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {eventBoards.map((ev) => {
+            {eventBoards.map((ev, evIdx) => {
               const isRecent =
                 ev.last_updated &&
                 Date.now() - new Date(ev.last_updated).getTime() <= 24 * 60 * 60 * 1000;
@@ -507,37 +546,40 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <ol className="space-y-2">
-                      {ev.rows.map((r, i) => (
-                        <li
-                          key={r.course_id}
-                          className="flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2"
-                          style={r.course_color ? { borderLeft: `3px solid ${r.course_color}` } : undefined}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span
-                              className={`grid h-6 w-6 place-items-center rounded-full text-xs font-bold shrink-0 ${
-                                i === 0
-                                  ? "bg-gradient-gold text-accent-foreground"
-                                  : i === 1
-                                  ? "bg-silver text-foreground"
-                                  : i === 2
-                                  ? "bg-bronze text-primary-foreground"
-                                  : "bg-secondary text-foreground"
-                              }`}
-                            >
-                              {i + 1}
-                            </span>
-                            <CourseAvatar
-                              name={r.course_name}
-                              image={r.course_image}
-                              color={r.course_color}
-                              size="sm"
-                            />
-                            <span className="text-sm font-medium truncate">{r.course_name}</span>
-                          </div>
-                          <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
-                        </li>
-                      ))}
+                      {ev.rows.map((r, i) => {
+                        const rank = eventRanks[evIdx]?.[i] ?? i + 1;
+                        return (
+                          <li
+                            key={r.course_id}
+                            className="flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2"
+                            style={r.course_color ? { borderLeft: `3px solid ${r.course_color}` } : undefined}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span
+                                className={`grid h-6 w-6 place-items-center rounded-full text-xs font-bold shrink-0 ${
+                                  rank === 1
+                                    ? "bg-gradient-gold text-accent-foreground"
+                                    : rank === 2
+                                    ? "bg-silver text-foreground"
+                                    : rank === 3
+                                    ? "bg-bronze text-primary-foreground"
+                                    : "bg-secondary text-foreground"
+                                }`}
+                              >
+                                {rank}
+                              </span>
+                              <CourseAvatar
+                                name={r.course_name}
+                                image={r.course_image}
+                                color={r.course_color}
+                                size="sm"
+                              />
+                              <span className="text-sm font-medium truncate">{r.course_name}</span>
+                            </div>
+                            <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
+                          </li>
+                        );
+                      })}
                     </ol>
                   </CardContent>
                 </Card>
