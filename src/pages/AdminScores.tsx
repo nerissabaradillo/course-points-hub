@@ -100,7 +100,7 @@ export default function AdminScores() {
     queryFn: async (): Promise<ScoreRow[]> => {
       const { data, error } = await supabase
         .from("scores")
-        .select("id, points, course_id, event_id, courses(name, color)")
+        .select("id, points, mp_points, br_points, course_id, event_id, courses(name, color)")
         .order("points", { ascending: false });
       if (error) throw error;
       return (data ?? []) as unknown as ScoreRow[];
@@ -110,13 +110,29 @@ export default function AdminScores() {
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["scores-with-relations"] });
     qc.invalidateQueries({ queryKey: ["rankings"] });
+    qc.invalidateQueries({ queryKey: ["event-leaderboards"] });
   };
+
+  const isCodm = isCodmEvent(events?.find((e) => e.id === eventId)?.name);
 
   const createMut = useMutation({
     mutationFn: async () => {
-      const pts = parseFloat(points);
-      if (!courseId || !eventId || isNaN(pts)) throw new Error("All fields are required");
-      // Prevent duplicate score for the same course in this event
+      if (!courseId || !eventId) throw new Error("All fields are required");
+
+      let pts: number;
+      let mp: number | null = null;
+      let br: number | null = null;
+
+      if (isCodm) {
+        mp = parseFloat(mpPoints);
+        br = parseFloat(brPoints);
+        if (isNaN(mp) || isNaN(br)) throw new Error("Enter both MP and BR points");
+        pts = mp + br;
+      } else {
+        pts = parseFloat(points);
+        if (isNaN(pts)) throw new Error("Enter points");
+      }
+
       const { data: existing, error: checkErr } = await supabase
         .from("scores")
         .select("id")
@@ -131,12 +147,16 @@ export default function AdminScores() {
         course_id: courseId,
         event_id: eventId,
         points: pts,
+        mp_points: mp,
+        br_points: br,
       });
       if (error) throw error;
     },
     onSuccess: () => {
       toast.success("Score added");
       setPoints("");
+      setMpPoints("");
+      setBrPoints("");
       setCourseId("");
       invalidate();
     },
@@ -144,8 +164,11 @@ export default function AdminScores() {
   });
 
   const updateMut = useMutation({
-    mutationFn: async ({ id, pts }: { id: string; pts: number }) => {
-      const { error } = await supabase.from("scores").update({ points: pts }).eq("id", id);
+    mutationFn: async (args: { id: string; pts: number; mp?: number | null; br?: number | null }) => {
+      const payload: Record<string, number | null> = { points: args.pts };
+      if (args.mp !== undefined) payload.mp_points = args.mp;
+      if (args.br !== undefined) payload.br_points = args.br;
+      const { error } = await supabase.from("scores").update(payload).eq("id", args.id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -155,8 +178,6 @@ export default function AdminScores() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
-
-  const deleteMut = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("scores").delete().eq("id", id);
       if (error) throw error;
