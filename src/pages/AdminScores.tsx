@@ -178,6 +178,8 @@ export default function AdminScores() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  const deleteMut = useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("scores").delete().eq("id", id);
       if (error) throw error;
