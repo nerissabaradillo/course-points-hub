@@ -33,7 +33,7 @@ interface EventLeaderboard {
 
 const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
   const [{ data: events, error: eErr }, { data: courses, error: cErr }, { data: scores, error: sErr }] = await Promise.all([
-    supabase.from("events").select("id, name").order("name"),
+    supabase.from("events").select("id, name, created_at").order("created_at", { ascending: true }),
     supabase.from("courses").select("id, name, image_url, color"),
     supabase.from("scores").select("event_id, course_id, points, updated_at"),
   ]);
