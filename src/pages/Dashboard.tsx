@@ -546,37 +546,40 @@ export default function Dashboard() {
                   </CardHeader>
                   <CardContent>
                     <ol className="space-y-2">
-                      {ev.rows.map((r, i) => (
-                        <li
-                          key={r.course_id}
-                          className="flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2"
-                          style={r.course_color ? { borderLeft: `3px solid ${r.course_color}` } : undefined}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                            <span
-                              className={`grid h-6 w-6 place-items-center rounded-full text-xs font-bold shrink-0 ${
-                                i === 0
-                                  ? "bg-gradient-gold text-accent-foreground"
-                                  : i === 1
-                                  ? "bg-silver text-foreground"
-                                  : i === 2
-                                  ? "bg-bronze text-primary-foreground"
-                                  : "bg-secondary text-foreground"
-                              }`}
-                            >
-                              {i + 1}
-                            </span>
-                            <CourseAvatar
-                              name={r.course_name}
-                              image={r.course_image}
-                              color={r.course_color}
-                              size="sm"
-                            />
-                            <span className="text-sm font-medium truncate">{r.course_name}</span>
-                          </div>
-                          <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
-                        </li>
-                      ))}
+                      {ev.rows.map((r, i) => {
+                        const rank = eventRanks[evIdx]?.[i] ?? i + 1;
+                        return (
+                          <li
+                            key={r.course_id}
+                            className="flex items-center justify-between rounded-md border border-border bg-background/50 px-3 py-2"
+                            style={r.course_color ? { borderLeft: `3px solid ${r.course_color}` } : undefined}
+                          >
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span
+                                className={`grid h-6 w-6 place-items-center rounded-full text-xs font-bold shrink-0 ${
+                                  rank === 1
+                                    ? "bg-gradient-gold text-accent-foreground"
+                                    : rank === 2
+                                    ? "bg-silver text-foreground"
+                                    : rank === 3
+                                    ? "bg-bronze text-primary-foreground"
+                                    : "bg-secondary text-foreground"
+                                }`}
+                              >
+                                {rank}
+                              </span>
+                              <CourseAvatar
+                                name={r.course_name}
+                                image={r.course_image}
+                                color={r.course_color}
+                                size="sm"
+                              />
+                              <span className="text-sm font-medium truncate">{r.course_name}</span>
+                            </div>
+                            <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
+                          </li>
+                        );
+                      })}
                     </ol>
                   </CardContent>
                 </Card>
