@@ -165,7 +165,7 @@ export default function AdminScores() {
 
   const updateMut = useMutation({
     mutationFn: async (args: { id: string; pts: number; mp?: number | null; br?: number | null }) => {
-      const payload: Record<string, number | null> = { points: args.pts };
+      const payload: { points: number; mp_points?: number | null; br_points?: number | null } = { points: args.pts };
       if (args.mp !== undefined) payload.mp_points = args.mp;
       if (args.br !== undefined) payload.br_points = args.br;
       const { error } = await supabase.from("scores").update(payload).eq("id", args.id);
