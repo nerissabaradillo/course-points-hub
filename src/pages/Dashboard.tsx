@@ -522,7 +522,7 @@ export default function Dashboard() {
           </Card>
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {eventBoards.map((ev) => {
+            {eventBoards.map((ev, evIdx) => {
               const isRecent =
                 ev.last_updated &&
                 Date.now() - new Date(ev.last_updated).getTime() <= 24 * 60 * 60 * 1000;
