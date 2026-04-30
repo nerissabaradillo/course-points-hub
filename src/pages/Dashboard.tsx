@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { Fragment, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, XAxis, YAxis, Tooltip as RTooltip, Cell, Legend } from "recharts";
 import { Trophy, Medal, Award, TrendingUp, Users, Clock } from "lucide-react";
@@ -21,6 +21,7 @@ interface RankingRow {
 interface EventLeaderboard {
   event_id: string;
   event_name: string;
+  is_codm: boolean;
   last_updated: string | null;
   rows: {
     course_id: string;
@@ -28,14 +29,18 @@ interface EventLeaderboard {
     course_image: string | null;
     course_color: string | null;
     points: number;
+    mp_points: number | null;
+    br_points: number | null;
   }[];
 }
+
+const isCodmEvent = (name?: string | null) => !!name && /codm/i.test(name);
 
 const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
   const [{ data: events, error: eErr }, { data: courses, error: cErr }, { data: scores, error: sErr }] = await Promise.all([
     supabase.from("events").select("id, name, created_at").order("created_at", { ascending: true }),
     supabase.from("courses").select("id, name, image_url, color"),
-    supabase.from("scores").select("event_id, course_id, points, updated_at"),
+    supabase.from("scores").select("event_id, course_id, points, mp_points, br_points, updated_at"),
   ]);
   if (eErr) throw eErr;
   if (cErr) throw cErr;
@@ -48,27 +53,30 @@ const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
   return (events ?? [])
     .map((ev) => {
       const evScores = (scores ?? []).filter((s) => s.event_id === ev.id);
-      const totals = new Map<string, number>();
       let lastUpdated: string | null = null;
-      evScores.forEach((s) => {
-        totals.set(s.course_id, (totals.get(s.course_id) ?? 0) + (s.points ?? 0));
+      const rows = evScores.map((s) => {
         if (!lastUpdated || (s.updated_at && s.updated_at > lastUpdated)) {
           lastUpdated = s.updated_at;
         }
+        const c = courseMap.get(s.course_id);
+        return {
+          course_id: s.course_id,
+          course_name: c?.name ?? "Unknown",
+          course_image: c?.image ?? null,
+          course_color: c?.color ?? null,
+          points: s.points ?? 0,
+          mp_points: s.mp_points ?? null,
+          br_points: s.br_points ?? null,
+        };
       });
-      const rows = Array.from(totals.entries())
-        .map(([course_id, points]) => {
-          const c = courseMap.get(course_id);
-          return {
-            course_id,
-            course_name: c?.name ?? "Unknown",
-            course_image: c?.image ?? null,
-            course_color: c?.color ?? null,
-            points,
-          };
-        })
-        .sort((a, b) => b.points - a.points);
-      return { event_id: ev.id, event_name: ev.name, last_updated: lastUpdated, rows };
+      rows.sort((a, b) => b.points - a.points);
+      return {
+        event_id: ev.id,
+        event_name: ev.name,
+        is_codm: isCodmEvent(ev.name),
+        last_updated: lastUpdated,
+        rows,
+      };
     })
     .filter((ev) => ev.rows.length > 0);
 };
@@ -439,13 +447,37 @@ export default function Dashboard() {
                       {(eventBoards ?? []).map((ev) => (
                         <th
                           key={ev.event_id}
-                          className="px-3 py-3 text-center font-semibold whitespace-nowrap text-muted-foreground"
+                          colSpan={ev.is_codm ? 3 : 1}
+                          className="px-3 py-3 text-center font-semibold whitespace-nowrap text-muted-foreground border-l border-border/60"
                         >
                           {ev.event_name}
                         </th>
                       ))}
-                      <th className="px-4 py-3 text-right font-semibold">Total</th>
+                      <th className="px-4 py-3 text-right font-semibold border-l border-border/60">Total</th>
                     </tr>
+                    {(eventBoards ?? []).some((ev) => ev.is_codm) && (
+                      <tr className="border-b border-border bg-muted/20">
+                        <th className="sticky left-0 z-10 bg-muted/20 px-4 py-1" />
+                        {(eventBoards ?? []).map((ev) =>
+                          ev.is_codm ? (
+                            <Fragment key={ev.event_id}>
+                              <th className="px-2 py-1 text-center text-[10px] uppercase tracking-wide text-muted-foreground border-l border-border/60">
+                                MP
+                              </th>
+                              <th className="px-2 py-1 text-center text-[10px] uppercase tracking-wide text-muted-foreground">
+                                BR
+                              </th>
+                              <th className="px-2 py-1 text-center text-[10px] uppercase tracking-wide text-muted-foreground">
+                                Total
+                              </th>
+                            </Fragment>
+                          ) : (
+                            <th key={ev.event_id} className="px-2 py-1 border-l border-border/60" />
+                          ),
+                        )}
+                        <th className="px-4 py-1 border-l border-border/60" />
+                      </tr>
+                    )}
                   </thead>
                   <tbody>
                     {rankings.map((r, i) => (
@@ -476,18 +508,30 @@ export default function Dashboard() {
                           const pts = found?.points ?? 0;
                           const rank = foundIdx >= 0 ? eventRanks[evIdx]?.[foundIdx] : undefined;
                           const isTop = rank === 1 && pts > 0;
+                          const totalCls = `px-3 py-3 text-center tabular-nums whitespace-nowrap border-l border-border/60 ${
+                            pts === 0 ? "text-muted-foreground/60" : "text-foreground"
+                          } ${isTop ? "font-bold text-primary" : ""}`;
+                          if (ev.is_codm) {
+                            const mp = found?.mp_points;
+                            const br = found?.br_points;
+                            const subCls = "px-2 py-3 text-center tabular-nums whitespace-nowrap text-xs text-muted-foreground";
+                            return (
+                              <Fragment key={ev.event_id}>
+                                <td className={`${subCls} border-l border-border/60`}>
+                                  {mp != null ? mp : "—"}
+                                </td>
+                                <td className={subCls}>{br != null ? br : "—"}</td>
+                                <td className={totalCls}>{pts}</td>
+                              </Fragment>
+                            );
+                          }
                           return (
-                            <td
-                              key={ev.event_id}
-                              className={`px-3 py-3 text-center tabular-nums whitespace-nowrap ${
-                                pts === 0 ? "text-muted-foreground/60" : "text-foreground"
-                              } ${isTop ? "font-bold text-primary" : ""}`}
-                            >
+                            <td key={ev.event_id} className={totalCls}>
                               {pts}
                             </td>
                           );
                         })}
-                        <td className="px-4 py-3 text-right font-bold text-primary tabular-nums whitespace-nowrap">
+                        <td className="px-4 py-3 text-right font-bold text-primary tabular-nums whitespace-nowrap border-l border-border/60">
                           {r.total_points}
                         </td>
                       </tr>
@@ -576,7 +620,14 @@ export default function Dashboard() {
                               />
                               <span className="text-sm font-medium truncate">{r.course_name}</span>
                             </div>
-                            <span className="text-sm font-bold text-primary shrink-0">{r.points} pts</span>
+                            <div className="flex flex-col items-end shrink-0">
+                              <span className="text-sm font-bold text-primary">{r.points} pts</span>
+                              {ev.is_codm && (r.mp_points != null || r.br_points != null) && (
+                                <span className="text-[10px] text-muted-foreground tabular-nums">
+                                  MP {r.mp_points ?? 0} · BR {r.br_points ?? 0}
+                                </span>
+                              )}
+                            </div>
                           </li>
                         );
                       })}
