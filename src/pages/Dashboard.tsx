@@ -234,8 +234,8 @@ export default function Dashboard() {
 
       {/* Champion Banner Card */}
       <section className="flex justify-center">
-        <div className="relative w-full max-w-md champion-glow rounded-2xl">
-          <div className="champion-float relative overflow-hidden rounded-2xl ring-2 ring-accent/60 shadow-elegant">
+        <div className="relative w-full max-w-xs sm:max-w-sm champion-glow rounded-xl">
+          <div className="champion-float relative overflow-hidden rounded-xl shadow-elegant">
             <img
               src={championBanner}
               alt="Pakusganay 2026 Overall Champion — House Baratheon (BSBA - FM)"
