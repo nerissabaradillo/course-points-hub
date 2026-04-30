@@ -105,6 +105,25 @@ const podiumStyles = [
 
 const barColors = ["hsl(var(--gold))", "hsl(var(--silver))", "hsl(var(--bronze))"];
 
+// Dense ranking: items with equal value share the same rank (1, 2, 2, 3)
+function computeRanks<T>(items: T[], getValue: (item: T) => number): number[] {
+  let lastVal: number | null = null;
+  let lastRank = 0;
+  return items.map((item, idx) => {
+    const v = getValue(item);
+    const rank = lastVal !== null && v === lastVal ? lastRank : idx + 1;
+    lastVal = v;
+    lastRank = rank;
+    return rank;
+  });
+}
+
+const rankSuffix = (n: number) => {
+  const s = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+};
+
 export default function Dashboard() {
   useEffect(() => {
     document.title = "Intramurals Leaderboard · Dashboard";
