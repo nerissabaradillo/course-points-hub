@@ -310,7 +310,12 @@ export default function AdminScores() {
                 </p>
               ) : (
                 <form
-                  className="grid gap-3 sm:grid-cols-[1fr_140px_auto]"
+                  className={cn(
+                    "grid gap-3",
+                    isCodm
+                      ? "sm:grid-cols-[1fr_110px_110px_auto]"
+                      : "sm:grid-cols-[1fr_140px_auto]",
+                  )}
                   onSubmit={(e) => {
                     e.preventDefault();
                     createMut.mutate();
@@ -329,13 +334,32 @@ export default function AdminScores() {
                     </SelectContent>
                   </Select>
 
-                  <Input
-                    type="number"
-                    step="any"
-                    value={points}
-                    onChange={(e) => setPoints(e.target.value)}
-                    placeholder="Points"
-                  />
+                  {isCodm ? (
+                    <>
+                      <Input
+                        type="number"
+                        step="any"
+                        value={mpPoints}
+                        onChange={(e) => setMpPoints(e.target.value)}
+                        placeholder="MP points"
+                      />
+                      <Input
+                        type="number"
+                        step="any"
+                        value={brPoints}
+                        onChange={(e) => setBrPoints(e.target.value)}
+                        placeholder="BR points"
+                      />
+                    </>
+                  ) : (
+                    <Input
+                      type="number"
+                      step="any"
+                      value={points}
+                      onChange={(e) => setPoints(e.target.value)}
+                      placeholder="Points"
+                    />
+                  )}
 
                   <Button type="submit" disabled={createMut.isPending}>
                     {createMut.isPending ? (
