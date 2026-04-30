@@ -276,8 +276,8 @@ export default function Dashboard() {
                       {r.total_points} <span className="text-sm font-medium text-muted-foreground">pts</span>
                     </div>
                   </div>
-              );
-            })}
+                );
+              })}
           </div>
         </section>
       )}
