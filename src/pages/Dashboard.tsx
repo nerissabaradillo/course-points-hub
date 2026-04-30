@@ -175,6 +175,19 @@ export default function Dashboard() {
     return { data, events };
   }, [rankings, eventBoards]);
 
+  // Dense ranks for overall rankings (ties share rank)
+  const overallRanks = useMemo(
+    () => (rankings ? computeRanks(rankings, (r) => r.total_points) : []),
+    [rankings],
+  );
+
+  // Dense ranks per event leaderboard
+  const eventRanks = useMemo(
+    () =>
+      (eventBoards ?? []).map((ev) => computeRanks(ev.rows, (r) => r.points)),
+    [eventBoards],
+  );
+
   // Distinct HSL colors for events (cycled around the wheel)
   const eventColor = (idx: number) => `hsl(${(idx * 47) % 360} 70% 55%)`;
 
