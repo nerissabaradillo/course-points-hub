@@ -344,10 +344,10 @@ export default function AdminScores() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {eventScores.map((s, idx) => (
+                    {rankedEventScores.map((s) => (
                       <TableRow key={s.id}>
                         <TableCell className="text-muted-foreground tabular-nums">
-                          {idx + 1}
+                          {s.rank}
                         </TableCell>
                         <TableCell className="font-medium">
                           <span className="inline-flex items-center gap-2">
