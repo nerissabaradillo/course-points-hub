@@ -21,6 +21,7 @@ interface RankingRow {
 interface EventLeaderboard {
   event_id: string;
   event_name: string;
+  is_codm: boolean;
   last_updated: string | null;
   rows: {
     course_id: string;
@@ -28,14 +29,18 @@ interface EventLeaderboard {
     course_image: string | null;
     course_color: string | null;
     points: number;
+    mp_points: number | null;
+    br_points: number | null;
   }[];
 }
+
+const isCodmEvent = (name?: string | null) => !!name && /codm/i.test(name);
 
 const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
   const [{ data: events, error: eErr }, { data: courses, error: cErr }, { data: scores, error: sErr }] = await Promise.all([
     supabase.from("events").select("id, name, created_at").order("created_at", { ascending: true }),
     supabase.from("courses").select("id, name, image_url, color"),
-    supabase.from("scores").select("event_id, course_id, points, updated_at"),
+    supabase.from("scores").select("event_id, course_id, points, mp_points, br_points, updated_at"),
   ]);
   if (eErr) throw eErr;
   if (cErr) throw cErr;
@@ -48,27 +53,30 @@ const fetchEventLeaderboards = async (): Promise<EventLeaderboard[]> => {
   return (events ?? [])
     .map((ev) => {
       const evScores = (scores ?? []).filter((s) => s.event_id === ev.id);
-      const totals = new Map<string, number>();
       let lastUpdated: string | null = null;
-      evScores.forEach((s) => {
-        totals.set(s.course_id, (totals.get(s.course_id) ?? 0) + (s.points ?? 0));
+      const rows = evScores.map((s) => {
         if (!lastUpdated || (s.updated_at && s.updated_at > lastUpdated)) {
           lastUpdated = s.updated_at;
         }
+        const c = courseMap.get(s.course_id);
+        return {
+          course_id: s.course_id,
+          course_name: c?.name ?? "Unknown",
+          course_image: c?.image ?? null,
+          course_color: c?.color ?? null,
+          points: s.points ?? 0,
+          mp_points: s.mp_points ?? null,
+          br_points: s.br_points ?? null,
+        };
       });
-      const rows = Array.from(totals.entries())
-        .map(([course_id, points]) => {
-          const c = courseMap.get(course_id);
-          return {
-            course_id,
-            course_name: c?.name ?? "Unknown",
-            course_image: c?.image ?? null,
-            course_color: c?.color ?? null,
-            points,
-          };
-        })
-        .sort((a, b) => b.points - a.points);
-      return { event_id: ev.id, event_name: ev.name, last_updated: lastUpdated, rows };
+      rows.sort((a, b) => b.points - a.points);
+      return {
+        event_id: ev.id,
+        event_name: ev.name,
+        is_codm: isCodmEvent(ev.name),
+        last_updated: lastUpdated,
+        rows,
+      };
     })
     .filter((ev) => ev.rows.length > 0);
 };
